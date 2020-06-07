@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30128.74
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReunionGet.Parser", "Source\ReunionGet.Parser\ReunionGet.Parser.csproj", "{B5A791DB-4DDA-4242-AA71-9F0B4D3320AA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FB8D97F2-5074-4D1D-8764-55A14AF6D65C}"
+	ProjectSection(SolutionItems) = preProject
+		global.json = global.json
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{2549F604-BE33-41BC-808A-1BB4649A6011}"
+	ProjectSection(SolutionItems) = preProject
+		Source\Directory.Build.props = Source\Directory.Build.props
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B5A791DB-4DDA-4242-AA71-9F0B4D3320AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B5A791DB-4DDA-4242-AA71-9F0B4D3320AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B5A791DB-4DDA-4242-AA71-9F0B4D3320AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B5A791DB-4DDA-4242-AA71-9F0B4D3320AA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B5A791DB-4DDA-4242-AA71-9F0B4D3320AA} = {2549F604-BE33-41BC-808A-1BB4649A6011}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {50D99955-3D39-4A91-A30C-8E2F7D084CD7}
+	EndGlobalSection
+EndGlobal
