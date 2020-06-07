@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace ReunionGet.Parser
 {
     public static class BEncoding
     {
-        public static object Read(ReadOnlySpan<char> content)
+        public static object Read(ReadOnlySpan<byte> content)
         {
             if (content.IsEmpty)
                 throw new ArgumentException("Unexpected ending.", nameof(content));
@@ -18,37 +19,37 @@ namespace ReunionGet.Parser
             return obj;
         }
 
-        private static object ReadInternal(ref ReadOnlySpan<char> content)
+        private static object ReadInternal(ref ReadOnlySpan<byte> content)
         {
-            char first = content[0];
+            byte first = content[0];
 
-            if (first == 'i')
+            if (first == (byte)'i')
             {
                 int i = 1;
                 while (content[i] != 'e')
                     i++;
 
-                int value = int.Parse(content[1..i]);
+                int value = ParseUtf8Int(content[1..i]);
                 content = content[(i + 1)..];
                 return value;
             }
-            else if (first == 'l')
+            else if (first == (byte)'l')
             {
                 var list = new List<object>();
                 content = content[1..];
 
-                while (content[0] != 'e')
+                while (content[0] != (byte)'e')
                     list.Add(ReadInternal(ref content));
 
                 content = content[1..];
                 return list;
             }
-            else if (first == 'd')
+            else if (first == (byte)'d')
             {
                 var dict = new Dictionary<string, object>();
                 content = content[1..];
 
-                while (content[0] != 'e')
+                while (content[0] != (byte)'e')
                 {
                     object key = ReadInternal(ref content);
                     if (!(key is string keyStr))
@@ -61,21 +62,50 @@ namespace ReunionGet.Parser
                 content = content[1..];
                 return dict;
             }
-            else if (first >= '0' && first <= '9')
+            else if (first >= (byte)'0' && first <= (byte)'9')
             {
                 int i = 1;
-                while (content[i] != ':')
+                while (content[i] != (byte)':')
                     i++;
 
-                int length = int.Parse(content[..i]);
+                int length = ParseUtf8Int(content[..i]);
 
-                string result = new string(content.Slice(i + 1, length));
+                string result = Encoding.UTF8.GetString(content.Slice(i + 1, length));
                 content = content[(i + 1 + length)..];
                 return result;
             }
             else
             {
                 throw new FormatException($"Unknown BEncoding start character {first}.");
+            }
+
+            static int ParseUtf8Int(ReadOnlySpan<byte> span)
+            {
+                bool negative = false;
+                if (span[0] == (byte)'-')
+                {
+                    negative = true;
+                    span = span[1..];
+                }
+
+                if (span[0] == (byte)'0')
+                {
+                    if (negative || span.Length != 1)
+                        throw new FormatException("Leading 0s are not allowed.");
+                    else
+                        return 0;
+                }
+
+                int value = 0;
+                foreach (byte b in span)
+                {
+                    if (b < (byte)'0' || b > (byte)'9')
+                        throw new FormatException($"Non-numeric character {(char)b} in integer literal.");
+
+                    value = value * 10 + b - (byte)'0';
+                }
+
+                return negative ? -value : value;
             }
         }
     }
