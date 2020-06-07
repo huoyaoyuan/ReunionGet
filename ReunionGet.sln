@@ -15,6 +15,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{2549F6
 		Source\Directory.Build.props = Source\Directory.Build.props
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{385054D4-2D39-4F6D-A018-CE1D986D679A}"
+EndProject
+Project("{F184B08F-C81C-45F6-A57F-5ABD9991F28F}") = "ReunionGet.Parser.Tests", "Test\ReunionGet.Parser.Tests\ReunionGet.Parser.Tests.vbproj", "{D650938D-769A-41A6-8A20-C117BB065D28}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -25,12 +29,17 @@ Global
 		{B5A791DB-4DDA-4242-AA71-9F0B4D3320AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5A791DB-4DDA-4242-AA71-9F0B4D3320AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B5A791DB-4DDA-4242-AA71-9F0B4D3320AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D650938D-769A-41A6-8A20-C117BB065D28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D650938D-769A-41A6-8A20-C117BB065D28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D650938D-769A-41A6-8A20-C117BB065D28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D650938D-769A-41A6-8A20-C117BB065D28}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{B5A791DB-4DDA-4242-AA71-9F0B4D3320AA} = {2549F604-BE33-41BC-808A-1BB4649A6011}
+		{D650938D-769A-41A6-8A20-C117BB065D28} = {385054D4-2D39-4F6D-A018-CE1D986D679A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {50D99955-3D39-4A91-A30C-8E2F7D084CD7}
