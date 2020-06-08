@@ -83,4 +83,16 @@ Public Class BEncodingTest
         Assert.Throws(Of FormatException)(
             Sub() ReadFromString(CStr(value)))
     End Sub
+
+    <Theory>
+    <InlineData("🕊")>
+    <InlineData("🐎")>
+    <InlineData("🀇")>
+    Public Sub TestUtf8(value As Object)
+        Dim u8Str = CStr(value)
+        Dim u8Len = Encoding.UTF8.GetByteCount(u8Str)
+        Dim bytes = Encoding.UTF8.GetBytes(u8Len & ":" & u8Str)
+        Dim o = BEncoding.Read(bytes)
+        Assert.Equal(u8Str, o)
+    End Sub
 End Class
