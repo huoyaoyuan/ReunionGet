@@ -28,7 +28,7 @@ namespace ReunionGet.Parser
                     while (content[i] != 'e')
                         i++;
 
-                    int value = ParseUtf8Int(content[1..i]);
+                    long value = ParseUtf8Number(content[1..i]);
                     content = content[(i + 1)..];
                     return value;
                 }
@@ -72,7 +72,7 @@ namespace ReunionGet.Parser
                     while (content[i] != (byte)':')
                         i++;
 
-                    int length = ParseUtf8Int(content[..i]);
+                    int length = (int)ParseUtf8Number(content[..i]);
 
                     string result = Encoding.UTF8.GetString(content.Slice(i + 1, length));
                     content = content[(i + 1 + length)..];
@@ -92,7 +92,7 @@ namespace ReunionGet.Parser
                 throw new FormatException("BEncoding input incomplete.", e);
             }
 
-            static int ParseUtf8Int(ReadOnlySpan<byte> span)
+            static long ParseUtf8Number(ReadOnlySpan<byte> span)
             {
                 bool negative = false;
                 if (span[0] == (byte)'-')
@@ -109,7 +109,7 @@ namespace ReunionGet.Parser
                         return 0;
                 }
 
-                int value = 0;
+                long value = 0;
                 foreach (byte b in span)
                 {
                     if (b < (byte)'0' || b > (byte)'9')

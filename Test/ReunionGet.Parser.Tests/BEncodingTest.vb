@@ -8,9 +8,10 @@ Public Class BEncodingTest
     End Function
 
     <Theory>
-    <InlineData("i123e", 123)>
-    <InlineData("i-123e", -123)>
-    <InlineData("i0e", 0)>
+    <InlineData("i123e", 123L)>
+    <InlineData("i-123e", -123L)>
+    <InlineData("i0e", 0L)>
+    <InlineData("i1145141919810e", 1145141919810L)>
     Public Sub TestIntegers(value As Object, expected As Object)
         Dim o = ReadFromString(CStr(value))
         Assert.Equal(expected, o)
@@ -46,7 +47,7 @@ Public Class BEncodingTest
     <Fact>
     Public Sub TestList()
         Dim o = ReadFromString("li123e3:abci4ee")
-        Assert.Equal(New Object() {123, "abc", 4}, o)
+        Assert.Equal(New Object() {123L, "abc", 4L}, o)
     End Sub
 
     <Fact>
@@ -59,7 +60,7 @@ Public Class BEncodingTest
     Public Sub TestDict()
         Dim o = ReadFromString("d1:ai123e1:b3:abce")
         Assert.Equal(New Dictionary(Of String, Object) From {
-            {"a", 123},
+            {"a", 123L},
             {"b", "abc"}
         }, o)
     End Sub
@@ -74,9 +75,9 @@ Public Class BEncodingTest
     Public Sub TestMultiLevelDict()
         Dim o = ReadFromString("d1:ai123e1:bd2:cdli456e3:efgeee")
         Assert.Equal(New Dictionary(Of String, Object) From {
-            {"a", 123},
+            {"a", 123L},
             {"b", New Dictionary(Of String, Object) From {
-                {"cd", New Object() {456, "efg"}}
+                {"cd", New Object() {456L, "efg"}}
             }}
         }, o)
     End Sub
