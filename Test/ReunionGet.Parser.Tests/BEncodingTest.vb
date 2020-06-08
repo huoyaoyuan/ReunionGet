@@ -7,10 +7,22 @@ Public Class BEncodingTest
         Return BEncoding.Read(bytes)
     End Function
 
-    <Fact>
-    Public Sub TestInteger()
-        Dim o = ReadFromString("i123e")
-        Assert.Equal(123, o)
+    <Theory>
+    <InlineData("i123e", 123)>
+    <InlineData("i-123e", -123)>
+    <InlineData("i0e", 0)>
+    Public Sub TestIntegers(value As Object, expected As Object)
+        Dim o = ReadFromString(CStr(value))
+        Assert.Equal(expected, o)
+    End Sub
+
+    <Theory>
+    <InlineData("i01e")>
+    <InlineData("i-0e")>
+    <InlineData("i1.2e")>
+    Public Sub TestInvalidNumbers(value As Object)
+        Assert.Throws(Of FormatException)(
+            Sub() ReadFromString(CStr(value)))
     End Sub
 
     <Fact>
@@ -23,6 +35,12 @@ Public Class BEncodingTest
     Public Sub TestString()
         Dim o = ReadFromString("5:abcde")
         Assert.Equal("abcde", o)
+    End Sub
+
+    <Fact>
+    Public Sub TestLongString()
+        Dim o = ReadFromString("12:qwertyuiop[]")
+        Assert.Equal("qwertyuiop[]", o)
     End Sub
 
     <Fact>
@@ -79,6 +97,7 @@ Public Class BEncodingTest
     <InlineData("i123")>
     <InlineData("5:abcd")>
     <InlineData("li123e3:abci4e")>
+    <InlineData("e")>
     Public Sub TestNotEnoughData(value As Object)
         Assert.Throws(Of FormatException)(
             Sub() ReadFromString(CStr(value)))
