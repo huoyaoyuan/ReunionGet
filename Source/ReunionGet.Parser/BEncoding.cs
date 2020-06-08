@@ -1,124 +1,61 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace ReunionGet.Parser
 {
     public static class BEncoding
     {
-        public static object Read(ReadOnlySpan<byte> content)
+        public static object Read(ReadOnlySpan<byte> content, bool strict = false)
         {
-            object obj = ReadInternal(ref content);
+            var reader = new BEncodingReader(content);
+            object obj = ReadCore(ref reader, strict);
 
-            if (!content.IsEmpty)
+            if (!reader.Ends())
                 throw new FormatException("Unexpected content after ending.");
 
             return obj;
         }
 
-        private static object ReadInternal(ref ReadOnlySpan<byte> content)
+        private static object ReadCore(ref BEncodingReader reader, bool strict)
         {
-            try
+            if (reader.TryReadInt64(out long l, strict))
             {
-                byte first = content[0];
-
-                if (first == (byte)'i')
-                {
-                    int i = 1;
-                    while (content[i] != 'e')
-                        i++;
-
-                    long value = ParseUtf8Number(content[1..i]);
-                    content = content[(i + 1)..];
-                    return value;
-                }
-                else if (first == (byte)'l')
-                {
-                    var list = new List<object>();
-                    content = content[1..];
-
-                    while (content[0] != (byte)'e')
-                        list.Add(ReadInternal(ref content));
-
-                    content = content[1..];
-                    return list;
-                }
-                else if (first == (byte)'d')
-                {
-                    var dict = new Dictionary<string, object>();
-                    content = content[1..];
-                    string? lastKey = null;
-
-                    while (content[0] != (byte)'e')
-                    {
-                        object key = ReadInternal(ref content);
-                        if (!(key is string keyStr))
-                            throw new FormatException("Dictionary key must be string.");
-
-                        if (string.CompareOrdinal(lastKey, keyStr) >= 0)
-                            throw new FormatException("Dictionary keys must appear in sorted order.");
-                        lastKey = keyStr;
-
-                        object value = ReadInternal(ref content);
-                        dict.Add(keyStr, value);
-                    }
-
-                    content = content[1..];
-                    return dict;
-                }
-                else if (first >= (byte)'0' && first <= (byte)'9')
-                {
-                    int i = 1;
-                    while (content[i] != (byte)':')
-                        i++;
-
-                    int length = (int)ParseUtf8Number(content[..i]);
-
-                    string result = Encoding.UTF8.GetString(content.Slice(i + 1, length));
-                    content = content[(i + 1 + length)..];
-                    return result;
-                }
-                else
-                {
-                    throw new FormatException($"Unknown BEncoding start character {first}.");
-                }
+                return l;
             }
-            catch (ArgumentOutOfRangeException e)
+            else if (reader.TryReadString(out string? str))
             {
-                throw new FormatException("BEncoding input incomplete.", e);
+                return str;
             }
-            catch (IndexOutOfRangeException e)
+            else if (reader.TryReadListStart())
             {
-                throw new FormatException("BEncoding input incomplete.", e);
+                var list = new List<object>();
+
+                while (!reader.TryReadListDictEnd())
+                    list.Add(ReadCore(ref reader, strict));
+
+                return list;
             }
-
-            static long ParseUtf8Number(ReadOnlySpan<byte> span)
+            else if (reader.TryReadDictStart())
             {
-                bool negative = false;
-                if (span[0] == (byte)'-')
+                var dict = new Dictionary<string, object>();
+                string? lastKey = null;
+
+                while (!reader.TryReadListDictEnd())
                 {
-                    negative = true;
-                    span = span[1..];
+                    string key = reader.ReadString();
+                    if (strict &&
+                        string.CompareOrdinal(lastKey, key) >= 0)
+                        throw new FormatException("Dictionary keys must appear in sorted order.");
+
+                    lastKey = key;
+                    dict.Add(key, ReadCore(ref reader, strict));
                 }
 
-                if (span[0] == (byte)'0')
-                {
-                    if (negative || span.Length != 1)
-                        throw new FormatException("Leading 0s are not allowed.");
-                    else
-                        return 0;
-                }
-
-                long value = 0;
-                foreach (byte b in span)
-                {
-                    if (b < (byte)'0' || b > (byte)'9')
-                        throw new FormatException($"Non-numeric character {(char)b} in integer literal.");
-
-                    value = value * 10 + b - (byte)'0';
-                }
-
-                return negative ? -value : value;
+                return dict;
+            }
+            else
+            {
+                throw new FormatException("Can't read current state as any type of object.");
             }
         }
     }

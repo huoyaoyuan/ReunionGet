@@ -4,7 +4,7 @@ Imports System.Text
 Public Class BEncodingTest
     Private Function ReadFromString(s As String) As Object
         Dim bytes = Encoding.UTF8.GetBytes(s)
-        Return BEncoding.Read(bytes)
+        Return BEncoding.Read(bytes, True)
     End Function
 
     <Theory>
@@ -99,6 +99,8 @@ Public Class BEncodingTest
     <InlineData("5:abcd")>
     <InlineData("li123e3:abci4e")>
     <InlineData("e")>
+    <InlineData("ie")>
+    <InlineData("i-e")>
     Public Sub TestNotEnoughData(value As Object)
         Assert.Throws(Of FormatException)(
             Sub() ReadFromString(CStr(value)))
@@ -114,5 +116,27 @@ Public Class BEncodingTest
         Dim bytes = Encoding.UTF8.GetBytes(u8Len & ":" & u8Str)
         Dim o = BEncoding.Read(bytes)
         Assert.Equal(u8Str, o)
+    End Sub
+
+    <Theory>
+    <InlineData("i00e", 0L)>
+    <InlineData("i01e", 1L)>
+    <InlineData("i-0e", 0L)>
+    <InlineData("ie", 0L)>
+    <InlineData("i-e", 0L)>
+    Public Sub TestNonStrictNumber(value As Object, expected As Object)
+        Dim bytes = Encoding.UTF8.GetBytes(CStr(value))
+        Dim o = BEncoding.Read(bytes, False)
+        Assert.Equal(expected, o)
+    End Sub
+
+    <Fact>
+    Public Sub TestNonStrictDict()
+        Dim bytes = Encoding.UTF8.GetBytes(CStr("d1:bi1e1:ai1ee"))
+        Dim o = BEncoding.Read(bytes, False)
+        Assert.Equal(New Dictionary(Of String, Object) From {
+            {"b", 1L},
+            {"a", 1L}
+        }, o)
     End Sub
 End Class
