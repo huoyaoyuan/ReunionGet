@@ -47,12 +47,17 @@ namespace ReunionGet.Parser
                 {
                     var dict = new Dictionary<string, object>();
                     content = content[1..];
+                    string? lastKey = null;
 
                     while (content[0] != (byte)'e')
                     {
                         object key = ReadInternal(ref content);
                         if (!(key is string keyStr))
                             throw new FormatException("Dictionary key must be string.");
+
+                        if (string.CompareOrdinal(lastKey, keyStr) >= 0)
+                            throw new FormatException("Dictionary keys must appear in sorted order.");
+                        lastKey = keyStr;
 
                         object value = ReadInternal(ref content);
                         dict.Add(keyStr, value);

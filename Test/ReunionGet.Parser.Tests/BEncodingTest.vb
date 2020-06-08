@@ -69,6 +69,12 @@ Public Class BEncodingTest
             Sub() ReadFromString("di123ei456ee"))
     End Sub
 
+    <Fact>
+    Public Sub TestUnorderedKey()
+        Assert.Throws(Of FormatException)(
+            Sub() ReadFromString("d1:bi1e1:ai1ee"))
+    End Sub
+
     <Theory>
     <InlineData("i123")>
     <InlineData("5:abcd")>
