@@ -8,75 +8,83 @@ namespace ReunionGet.Parser
     {
         public static object Read(ReadOnlySpan<byte> content)
         {
-            if (content.IsEmpty)
-                throw new ArgumentException("Unexpected ending.", nameof(content));
-
             object obj = ReadInternal(ref content);
 
             if (!content.IsEmpty)
-                throw new ArgumentException("Unexpected content after ending.", nameof(content));
+                throw new FormatException("Unexpected content after ending.");
 
             return obj;
         }
 
         private static object ReadInternal(ref ReadOnlySpan<byte> content)
         {
-            byte first = content[0];
-
-            if (first == (byte)'i')
+            try
             {
-                int i = 1;
-                while (content[i] != 'e')
-                    i++;
+                byte first = content[0];
 
-                int value = ParseUtf8Int(content[1..i]);
-                content = content[(i + 1)..];
-                return value;
-            }
-            else if (first == (byte)'l')
-            {
-                var list = new List<object>();
-                content = content[1..];
-
-                while (content[0] != (byte)'e')
-                    list.Add(ReadInternal(ref content));
-
-                content = content[1..];
-                return list;
-            }
-            else if (first == (byte)'d')
-            {
-                var dict = new Dictionary<string, object>();
-                content = content[1..];
-
-                while (content[0] != (byte)'e')
+                if (first == (byte)'i')
                 {
-                    object key = ReadInternal(ref content);
-                    if (!(key is string keyStr))
-                        throw new FormatException("Dictionary key must be string.");
+                    int i = 1;
+                    while (content[i] != 'e')
+                        i++;
 
-                    object value = ReadInternal(ref content);
-                    dict.Add(keyStr, value);
+                    int value = ParseUtf8Int(content[1..i]);
+                    content = content[(i + 1)..];
+                    return value;
                 }
+                else if (first == (byte)'l')
+                {
+                    var list = new List<object>();
+                    content = content[1..];
 
-                content = content[1..];
-                return dict;
+                    while (content[0] != (byte)'e')
+                        list.Add(ReadInternal(ref content));
+
+                    content = content[1..];
+                    return list;
+                }
+                else if (first == (byte)'d')
+                {
+                    var dict = new Dictionary<string, object>();
+                    content = content[1..];
+
+                    while (content[0] != (byte)'e')
+                    {
+                        object key = ReadInternal(ref content);
+                        if (!(key is string keyStr))
+                            throw new FormatException("Dictionary key must be string.");
+
+                        object value = ReadInternal(ref content);
+                        dict.Add(keyStr, value);
+                    }
+
+                    content = content[1..];
+                    return dict;
+                }
+                else if (first >= (byte)'0' && first <= (byte)'9')
+                {
+                    int i = 1;
+                    while (content[i] != (byte)':')
+                        i++;
+
+                    int length = ParseUtf8Int(content[..i]);
+
+                    string result = Encoding.UTF8.GetString(content.Slice(i + 1, length));
+                    content = content[(i + 1 + length)..];
+                    return result;
+                }
+                else
+                {
+                    throw new FormatException($"Unknown BEncoding start character {first}.");
+                }
             }
-            else if (first >= (byte)'0' && first <= (byte)'9')
+            catch (ArgumentOutOfRangeException e)
             {
-                int i = 1;
-                while (content[i] != (byte)':')
-                    i++;
-
-                int length = ParseUtf8Int(content[..i]);
-
-                string result = Encoding.UTF8.GetString(content.Slice(i + 1, length));
-                content = content[(i + 1 + length)..];
-                return result;
+                throw new FormatException("BEncoding input incomplete.", e);
             }
-            else
+            catch (IndexOutOfRangeException e)
             {
-                throw new FormatException($"Unknown BEncoding start character {first}.");
+                throw new FormatException("BEncoding input incomplete.", e);
             }
 
             static int ParseUtf8Int(ReadOnlySpan<byte> span)

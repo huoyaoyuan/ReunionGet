@@ -15,7 +15,7 @@ Public Class BEncodingTest
 
     <Fact>
     Public Sub TestContentAfterEnding()
-        Assert.Throws(Of ArgumentException)(
+        Assert.Throws(Of FormatException)(
             Sub() ReadFromString("i123eaaa"))
     End Sub
 
@@ -74,7 +74,7 @@ Public Class BEncodingTest
     <InlineData("5:abcd")>
     <InlineData("li123e3:abci4e")>
     Public Sub TestNotEnoughData(value As Object)
-        Assert.ThrowsAny(Of Exception)(
+        Assert.Throws(Of FormatException)(
             Sub() ReadFromString(CStr(value)))
     End Sub
 End Class
