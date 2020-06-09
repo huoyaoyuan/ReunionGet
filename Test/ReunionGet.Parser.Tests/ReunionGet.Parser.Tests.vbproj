@@ -8,4 +8,8 @@
     <ProjectReference Include="..\..\Source\ReunionGet.Parser\ReunionGet.Parser.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\**\*" />
+  </ItemGroup>
+
 </Project>

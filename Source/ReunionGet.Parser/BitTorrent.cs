@@ -12,6 +12,7 @@ namespace ReunionGet.Parser
     {
         // TODO: use MemberNotNullWhen and is not null
 
+        #region Standard Specified Members
         public Uri Announce { get; }
 
         public string Name { get; }
@@ -20,7 +21,7 @@ namespace ReunionGet.Parser
 
         public ImmutableArray<Sha1Hash> PieceHashes { get; }
 
-        public long? TotalLength { get; }
+        public long? SingleFileLength { get; }
 
         public IReadOnlyList<(long length, string path)>? Files { get; }
 
@@ -28,7 +29,18 @@ namespace ReunionGet.Parser
             => Files?.Select(x => x.path)
             ?? Enumerable.Empty<string>();
 
-        public bool IsSingleFile => TotalLength != null;
+        public long TotalLength => IsSingleFile
+            ? SingleFileLength!.Value
+            : Files!.Sum(f => f.length);
+
+        public bool IsSingleFile => SingleFileLength != null;
+        #endregion
+
+        #region Additional Members
+        public string? Comment { get; }
+
+        public IReadOnlyList<Uri>? AnnounceList { get; }
+        #endregion
 
         public readonly struct Sha1Hash : IEquatable<Sha1Hash>
         {
@@ -113,7 +125,7 @@ namespace ReunionGet.Parser
                                     }
 
                                     case "length":
-                                        TotalLength = reader.ReadInt64();
+                                        SingleFileLength = reader.ReadInt64();
                                         break;
 
                                     case "files":
@@ -154,10 +166,33 @@ namespace ReunionGet.Parser
                                 }
                             break;
 
+                        case "comment":
+                            Comment = reader.ReadString();
+                            break;
+
+                        case "announce-list":
+                        {
+                            var list = new List<Uri>();
+
+                            reader.ReadListStart();
+                            while (!reader.TryReadListDictEnd())
+                            {
+                                reader.ReadListStart();
+                                list.Add(new Uri(reader.ReadString()));
+                                reader.ReadListDictEnd();
+                            }
+
+                            AnnounceList = list;
+                            break;
+                        }
+
                         default:
                             reader.SkipValue();
                             break;
                     }
+
+                if (!reader.Ends())
+                    throw new FormatException("Unexpected content after ending.");
             }
             catch (Exception ex)
             {
@@ -168,13 +203,18 @@ namespace ReunionGet.Parser
             Announce = new Uri(announce ?? throw new FormatException("The torrent doesn't have annouce part."));
             Name = name ?? throw new FormatException("The torrent doesn't have name part.");
 
-            if (Files != null && TotalLength != null
-                || Files is null && TotalLength is null)
+            if (Files != null && SingleFileLength != null
+                || Files is null && SingleFileLength is null)
                 throw new FormatException("The torrent must have exactly either of files and length.");
 
-            if (TotalLength < 0
+            if (SingleFileLength < 0
                 || Files?.Any(f => f.length < 0) == true)
                 throw new FormatException("Negative length detected.");
+
+            long pieceLengths = PieceHashes.Length * PieceLength;
+            long padding = pieceLengths - TotalLength;
+            if (padding < 0 || padding >= PieceLength)
+                throw new FormatException("Size mismatch between hash and file length.");
         }
 
         public static BitTorrent FromStream(Stream stream)

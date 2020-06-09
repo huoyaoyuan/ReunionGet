@@ -209,6 +209,12 @@ namespace ReunionGet.Parser
                 throw new FormatException("Current content is not a dict.");
         }
 
+        public void ReadListDictEnd()
+        {
+            if (!TryReadListDictEnd())
+                throw new FormatException("The list or dict hasn't ended.");
+        }
+
         public void SkipValue()
         {
             if (TryReadBytes(out _))
