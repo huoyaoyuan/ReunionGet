@@ -30,7 +30,7 @@ namespace ReunionGet.Parser
 
         public bool IsSingleFile => TotalLength != null;
 
-        public readonly struct Sha1Hash
+        public readonly struct Sha1Hash : IEquatable<Sha1Hash>
         {
             private readonly byte[] _hash;
 
@@ -43,6 +43,28 @@ namespace ReunionGet.Parser
 
                 _hash = byteSpan.ToArray();
             }
+
+            public override bool Equals(object? obj) => obj is Sha1Hash hash && Equals(hash);
+            public bool Equals(Sha1Hash other) => Hash.SequenceEqual(other.Hash);
+            public override int GetHashCode()
+            {
+                HashCode hash = default;
+                foreach (byte b in Hash)
+                    hash.Add(b);
+                return hash.ToHashCode();
+            }
+
+            public static bool operator ==(Sha1Hash left, Sha1Hash right) => left.Equals(right);
+            public static bool operator !=(Sha1Hash left, Sha1Hash right) => !(left == right);
+
+            public override string ToString()
+                => _hash is null
+                ? string.Empty
+                : string.Create(40, _hash, (span, array) =>
+                {
+                    for (int i = 0; i < array.Length; i++)
+                        _ = array[i].TryFormat(span.Slice(i * 2), out _, "X2");
+                });
         }
 
         public BitTorrent(ReadOnlySpan<byte> content)
