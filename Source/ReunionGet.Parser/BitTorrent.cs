@@ -34,12 +34,16 @@ namespace ReunionGet.Parser
             : Files!.Sum(f => f.length);
 
         public bool IsSingleFile => SingleFileLength != null;
+
+        public bool IsPrivate { get; }
         #endregion
 
         #region Additional Members
         public string? Comment { get; }
 
         public IReadOnlyList<Uri>? AnnounceList { get; }
+
+        public DateTimeOffset? CreationTime { get; }
         #endregion
 
         public readonly struct Sha1Hash : IEquatable<Sha1Hash>
@@ -160,6 +164,11 @@ namespace ReunionGet.Parser
                                         break;
                                     }
 
+                                    case "private":
+                                        if (reader.ReadInt32() == 1)
+                                            IsPrivate = true;
+                                        break;
+
                                     default:
                                         reader.SkipValue();
                                         break;
@@ -185,6 +194,10 @@ namespace ReunionGet.Parser
                             AnnounceList = list;
                             break;
                         }
+
+                        case "creation date":
+                            CreationTime = DateTimeOffset.FromUnixTimeSeconds(reader.ReadInt64());
+                            break;
 
                         default:
                             reader.SkipValue();
