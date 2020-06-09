@@ -7,8 +7,19 @@ namespace ReunionGet.Parser
     internal ref struct BEncodingReader
     {
         private ReadOnlySpan<byte> _bytes;
+        public int BytesConsumed { get; private set; }
 
-        public BEncodingReader(ReadOnlySpan<byte> bytes) => _bytes = bytes;
+        public BEncodingReader(ReadOnlySpan<byte> bytes)
+        {
+            _bytes = bytes;
+            BytesConsumed = 0;
+        }
+
+        private void AdvanceBytes(int bytesCount)
+        {
+            _bytes = _bytes.Slice(bytesCount);
+            BytesConsumed += bytesCount;
+        }
 
         private static bool TryParseUtf8Number(ReadOnlySpan<byte> span, out long value, bool strict = false)
         {
@@ -69,7 +80,7 @@ namespace ReunionGet.Parser
                     {
                         int length = (int)l;
                         span = _bytes.Slice(i + 1, length);
-                        _bytes = _bytes.Slice(i + 1 + length);
+                        AdvanceBytes(i + 1 + length);
                         return true;
                     }
                     else
@@ -127,7 +138,7 @@ namespace ReunionGet.Parser
                 {
                     if (TryParseUtf8Number(_bytes[1..i], out value, strict))
                     {
-                        _bytes = _bytes.Slice(i + 1);
+                        AdvanceBytes(i + 1);
                         return true;
                     }
                     else
@@ -166,7 +177,7 @@ namespace ReunionGet.Parser
                        v <= int.MaxValue)
                     {
                         value = (int)v;
-                        _bytes = _bytes.Slice(i + 1);
+                        AdvanceBytes(i + 1);
                         return true;
                     }
                     else
@@ -193,7 +204,7 @@ namespace ReunionGet.Parser
             if (_bytes.IsEmpty || _bytes[0] != ch)
                 return false;
 
-            _bytes = _bytes.Slice(1);
+            AdvanceBytes(1);
             return true;
         }
 

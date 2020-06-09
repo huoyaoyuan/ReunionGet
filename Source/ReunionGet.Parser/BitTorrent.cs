@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -36,6 +37,8 @@ namespace ReunionGet.Parser
         public bool IsSingleFile => SingleFileLength != null;
 
         public bool IsPrivate { get; }
+
+        public Sha1Hash InfoHash { get; }
         #endregion
 
         #region Additional Members
@@ -101,6 +104,9 @@ namespace ReunionGet.Parser
                             break;
 
                         case "info":
+                        {
+                            int infoStart = reader.BytesConsumed;
+
                             reader.ReadDictStart();
                             while (!reader.TryReadListDictEnd())
                                 switch (reader.ReadString())
@@ -173,7 +179,20 @@ namespace ReunionGet.Parser
                                         reader.SkipValue();
                                         break;
                                 }
+
+                            int infoEnd = reader.BytesConsumed;
+                            var infoSpan = content[infoStart..infoEnd];
+                            using (var sha = SHA1.Create())
+                            {
+                                Span<byte> shaSpan = stackalloc byte[20];
+                                if (!sha.TryComputeHash(infoSpan, shaSpan, out int bw) || bw != 20)
+                                    throw new InvalidOperationException("Failed to compute SHA1 hash.");
+
+                                InfoHash = new Sha1Hash(shaSpan);
+                            }
+
                             break;
+                        }
 
                         case "comment":
                             Comment = reader.ReadString();

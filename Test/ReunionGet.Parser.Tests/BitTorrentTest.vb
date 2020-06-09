@@ -19,6 +19,7 @@ Public Class BitTorrentTest
             Assert.Equal(torrent.TotalLength, torrent.SingleFileLength)
             Assert.True(torrent.IsPrivate)
             Assert.Equal(#2012/1/20 8:57:07#, torrent.CreationTime.Value.UtcDateTime)
+            Assert.Equal("D0D14C926E6E99761A2FDCFF27B403D96376EFF6", torrent.InfoHash.ToString())
         End Using
     End Sub
 
