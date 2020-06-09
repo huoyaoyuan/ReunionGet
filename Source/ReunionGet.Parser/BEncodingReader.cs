@@ -209,6 +209,33 @@ namespace ReunionGet.Parser
                 throw new FormatException("Current content is not a dict.");
         }
 
+        public void SkipValue()
+        {
+            if (TryReadBytes(out _))
+                return;
+            if (TryReadInt64(out _, false))
+                return;
+
+            if (TryReadListStart())
+            {
+                while (!TryReadListDictEnd())
+                    SkipValue();
+                return;
+            }
+
+            if (TryReadDictStart())
+            {
+                while (!TryReadListDictEnd())
+                {
+                    SkipValue();
+                    SkipValue();
+                }
+                return;
+            }
+
+            throw new FormatException("Can't skip value at the end.");
+        }
+
         public readonly bool Ends() => _bytes.IsEmpty;
     }
 }
