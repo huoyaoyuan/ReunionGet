@@ -151,17 +151,32 @@ dotnet_naming_style.pascal_case_style.capitalization = pascal_case
 
 #### Severity ####
 
+# IDE0001: Simplify names
+dotnet_diagnostic.IDE0001.severity = warning
+
+# IDE0002: Simplify member access
+dotnet_diagnostic.IDE0002.severity = warning
+
+# IDE0003: Remove qualification
+dotnet_diagnostic.IDE0003.severity = warning
+
+# IDE0004: Remove unnecessary cast
+dotnet_diagnostic.IDE0004.severity = warning
+
+# IDE0005: Remove unnecessary imports
+dotnet_diagnostic.IDE0005.severity = warning
+
 # IDE0055: Fix formatting
 dotnet_diagnostic.IDE0055.severity = warning
-
-# Default severity for analyzer diagnostics with category 'Globalization'
-dotnet_analyzer_diagnostic.category-Globalization.severity = none
 
 # CA1034: Nested types should not be visible
 dotnet_diagnostic.CA1034.severity = none
 
 # CA1062: Validate arguments of public methods
 dotnet_diagnostic.CA1062.severity = none
+
+# CA1303: Do not pass literals as localized parameters
+dotnet_diagnostic.CA1303.severity = none
 
 # CA5350: Do Not Use Weak Cryptographic Algorithms
 dotnet_diagnostic.CA5350.severity = none
