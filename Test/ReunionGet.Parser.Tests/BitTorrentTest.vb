@@ -25,11 +25,7 @@ Public Class BitTorrentTest
 
     <Fact>
     Public Sub TestTorrentAsObject()
-        Dim hash = New Byte() {
-            &H5C, &HC5, &HE6, &H52, &HBE,
-            &HD, &HE6, &HF2, &H78, &H5,
-            &HB3, &H4, &H64, &HFF, &H9B,
-            &H0, &HF4, &H89, &HF0, &HC9}
+        Dim hash = HexToBytes("5CC5E652BE0DE6F27805B30464FF9B00F489F0C9")
         Dim hashStr = Encoding.UTF8.GetString(hash)
 
         Using resourceStream = GetType(BitTorrentTest).Assembly.GetManifestResourceStream(GetType(BitTorrentTest), "sample.torrent")
