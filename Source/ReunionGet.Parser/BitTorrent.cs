@@ -243,9 +243,7 @@ namespace ReunionGet.Parser
                 || Files?.Any(f => f.length < 0) == true)
                 throw new FormatException("Negative length detected.");
 
-            long pieceLengths = PieceHashes.Length * PieceLength;
-            long padding = pieceLengths - TotalLength;
-            if (padding < 0 || padding >= PieceLength)
+            if ((TotalLength + PieceLength - 1) / PieceLength != PieceHashes.Length)
                 throw new FormatException("Size mismatch between hash and file length.");
         }
 
