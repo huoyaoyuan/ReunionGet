@@ -14,6 +14,8 @@ namespace ReunionGet.Parser
 
         public HashBlock HashValue { get; }
 
+        public string? OriginalString { get; }
+
         public Magnet(string source)
             : this(new Uri(source))
         {
@@ -26,6 +28,14 @@ namespace ReunionGet.Parser
 
             HashAlgorithm = hashAlgorithm;
             HashValue = new HashBlock(hash);
+            OriginalString = uri.OriginalString;
+        }
+
+        private Magnet(MagnetHashAlgorithm hashAlgorithm, byte[] hash, string originalString)
+        {
+            HashAlgorithm = hashAlgorithm;
+            HashValue = new HashBlock(hash);
+            OriginalString = originalString;
         }
 
         public Magnet(MagnetHashAlgorithm hashAlgorithm, HashBlock hash)
@@ -56,7 +66,7 @@ namespace ReunionGet.Parser
         {
             if (TryGetMagnetParts(uri, out var hashAlgorithm, out byte[]? hash))
             {
-                magnet = new Magnet(hashAlgorithm, new HashBlock(hash));
+                magnet = new Magnet(hashAlgorithm, hash, uri.OriginalString);
                 return true;
             }
             else
@@ -167,6 +177,29 @@ namespace ReunionGet.Parser
 
         public static bool operator ==(Magnet? left, Magnet? right) => EqualityComparer<Magnet>.Default.Equals(left, right);
         public static bool operator !=(Magnet? left, Magnet? right) => !(left == right);
+
+        public override string ToString() => ToString(false);
+        public string ToStringBase32() => ToString(true);
+
+        private string ToString(bool useBase32)
+        {
+            StringBuilder sb = new StringBuilder("magnet:?xt=urn:");
+
+            string? hashAlgorithmPart = HashAlgorithm switch
+            {
+                MagnetHashAlgorithm.BTIH => "btih:",
+                MagnetHashAlgorithm.SHA1 => "sha1:",
+                MagnetHashAlgorithm.MD5 => "md5:",
+                _ => null
+            };
+            if (hashAlgorithmPart is null)
+                return string.Empty;
+
+            _ = sb.Append(hashAlgorithmPart)
+                .Append(useBase32 ? HashValue.ToBase32() : HashValue.ToString());
+
+            return sb.ToString();
+        }
     }
 
     public enum MagnetHashAlgorithm

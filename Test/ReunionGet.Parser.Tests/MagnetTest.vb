@@ -1,9 +1,12 @@
 ﻿Imports Xunit
 
 Public Class MagnetTest
+    Private Const SHA1Magnet As String = "magnet:?xt=urn:btih:D0D14C926E6E99761A2FDCFF27B403D96376EFF6"
+    Private Const Base32Magnet As String = "magnet:?xt=urn:btih:2DIUZETON2MXMGRP3T7SPNAD3FRXN37W"
+
     <Theory>
-    <InlineData("magnet:?xt=urn:btih:D0D14C926E6E99761A2FDCFF27B403D96376EFF6")>
-    <InlineData("magnet:?xt=urn:btih:2DIUZETON2MXMGRP3T7SPNAD3FRXN37W")>
+    <InlineData(SHA1Magnet)>
+    <InlineData(Base32Magnet)>
     Public Sub TestBtih(param As Object)
         Dim magnet = New Magnet(CStr(param))
         Assert.Equal(MagnetHashAlgorithm.BTIH, magnet.HashAlgorithm)
@@ -31,10 +34,22 @@ Public Class MagnetTest
         Using resourceStream = GetType(BitTorrentTest).Assembly.GetManifestResourceStream(GetType(BitTorrentTest), "sample.torrent")
             Assert.NotNull(resourceStream)
             Dim torrent = BitTorrent.FromStream(resourceStream)
-            Dim magnet = New Magnet("magnet:?xt=urn:btih:D0D14C926E6E99761A2FDCFF27B403D96376EFF6")
+            Dim magnet = New Magnet(SHA1Magnet)
 
             Assert.Equal(magnet, torrent.ToMagnet())
             Assert.True(magnet.Fits(torrent))
         End Using
+    End Sub
+
+    <Fact>
+    Public Sub TestMagnetFormats()
+        Dim magnet1 = New Magnet(SHA1Magnet)
+        Dim magnet2 = New Magnet(Base32Magnet)
+
+        Assert.Equal(magnet1, magnet2)
+        Assert.True(magnet1 = magnet2)
+        Assert.NotEqual(magnet1.OriginalString, magnet2.OriginalString)
+        Assert.Equal(Base32Magnet, magnet1.ToStringBase32())
+        Assert.Equal(SHA1Magnet, magnet2.ToString())
     End Sub
 End Class
