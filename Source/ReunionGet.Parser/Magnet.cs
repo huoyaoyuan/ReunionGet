@@ -21,7 +21,7 @@ namespace ReunionGet.Parser
         public Magnet(Uri uri)
         {
             if (!TryGetMagnetParts(uri, out var hashAlgorithm, out byte[]? hash))
-                throw new ArgumentException("The uri is not a valid magnet.", nameof(uri));
+                throw new MagnetFormatException();
 
             HashAlgorithm = hashAlgorithm;
             _hash = hash;
@@ -151,5 +151,20 @@ namespace ReunionGet.Parser
         BTIH,
         SHA1,
         MD5
+    }
+
+    public sealed class MagnetFormatException : FormatException
+    {
+        public MagnetFormatException() : base("The uri is not a valid magnet.")
+        {
+        }
+
+        public MagnetFormatException(string message) : base(message)
+        {
+        }
+
+        public MagnetFormatException(string message, Exception innerException) : base(message, innerException)
+        {
+        }
     }
 }
