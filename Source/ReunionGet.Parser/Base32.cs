@@ -6,10 +6,10 @@ namespace ReunionGet.Parser
 {
     internal static class Base32
     {
-        private static readonly string s_base32Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567=";
+        private const string Base32Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567=";
 
         private static byte Base32ByteToU8(byte base32)
-            => (byte)s_base32Chars[base32];
+            => (byte)Base32Chars[base32];
 
         private static byte Base32U8ToByte(byte u8byte)
         {

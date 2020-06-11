@@ -20,7 +20,7 @@ namespace ReunionGet.Parser
 
         public long PieceLength { get; }
 
-        public ImmutableArray<Sha1Hash> PieceHashes { get; }
+        public ImmutableArray<SHA1Hash> PieceHashes { get; }
 
         public long? SingleFileLength { get; }
 
@@ -38,7 +38,7 @@ namespace ReunionGet.Parser
 
         public bool IsPrivate { get; }
 
-        public Sha1Hash InfoHash { get; }
+        public SHA1Hash InfoHash { get; }
         #endregion
 
         #region Additional Members
@@ -49,13 +49,13 @@ namespace ReunionGet.Parser
         public DateTimeOffset? CreationTime { get; }
         #endregion
 
-        public readonly struct Sha1Hash : IEquatable<Sha1Hash>
+        public readonly struct SHA1Hash : IEquatable<SHA1Hash>
         {
             private readonly byte[] _hash;
 
-            public ReadOnlySpan<byte> Hash => _hash ?? throw new InvalidOperationException($"Using uninitialized {nameof(Sha1Hash)} instance.");
+            public ReadOnlySpan<byte> Hash => _hash ?? throw new InvalidOperationException($"Using uninitialized {nameof(SHA1Hash)} instance.");
 
-            internal Sha1Hash(ReadOnlySpan<byte> byteSpan)
+            internal SHA1Hash(ReadOnlySpan<byte> byteSpan)
             {
                 if (byteSpan.Length != 20)
                     throw new ArgumentException("Bad hash size.", nameof(byteSpan));
@@ -63,8 +63,8 @@ namespace ReunionGet.Parser
                 _hash = byteSpan.ToArray();
             }
 
-            public override bool Equals(object? obj) => obj is Sha1Hash hash && Equals(hash);
-            public bool Equals(Sha1Hash other) => Hash.SequenceEqual(other.Hash);
+            public override bool Equals(object? obj) => obj is SHA1Hash hash && Equals(hash);
+            public bool Equals(SHA1Hash other) => Hash.SequenceEqual(other.Hash);
             public override int GetHashCode()
             {
                 HashCode hash = default;
@@ -73,8 +73,8 @@ namespace ReunionGet.Parser
                 return hash.ToHashCode();
             }
 
-            public static bool operator ==(Sha1Hash left, Sha1Hash right) => left.Equals(right);
-            public static bool operator !=(Sha1Hash left, Sha1Hash right) => !(left == right);
+            public static bool operator ==(SHA1Hash left, SHA1Hash right) => left.Equals(right);
+            public static bool operator !=(SHA1Hash left, SHA1Hash right) => !(left == right);
 
             public override string ToString()
                 => _hash is null
@@ -122,11 +122,11 @@ namespace ReunionGet.Parser
                                     case "pieces":
                                     {
                                         var span = reader.ReadBytes();
-                                        var builder = ImmutableArray.CreateBuilder<Sha1Hash>(span.Length / 20);
+                                        var builder = ImmutableArray.CreateBuilder<SHA1Hash>(span.Length / 20);
 
                                         while (!span.IsEmpty)
                                         {
-                                            builder.Add(new Sha1Hash(span[0..20]));
+                                            builder.Add(new SHA1Hash(span[0..20]));
                                             span = span.Slice(20);
                                         }
 
@@ -188,7 +188,7 @@ namespace ReunionGet.Parser
                                 if (!sha.TryComputeHash(infoSpan, shaSpan, out int bw) || bw != 20)
                                     throw new InvalidOperationException("Failed to compute SHA1 hash.");
 
-                                InfoHash = new Sha1Hash(shaSpan);
+                                InfoHash = new SHA1Hash(shaSpan);
                             }
 
                             break;
@@ -263,9 +263,16 @@ namespace ReunionGet.Parser
             return new BitTorrent(buffer);
         }
 
-        public static BitTorrent FromFile(string path) => FromStream(File.OpenRead(path));
+        public static BitTorrent FromFile(string path)
+        {
+            using var stream = File.OpenRead(path);
+            return FromStream(stream);
+        }
 
         public static ValueTask<BitTorrent> FromFileAsync(string path, CancellationToken cancellationToken = default)
-            => FromStreamAsync(File.OpenRead(path), cancellationToken);
+        {
+            using var stream = File.OpenRead(path);
+            return FromStreamAsync(stream, cancellationToken);
+        }
     }
 }

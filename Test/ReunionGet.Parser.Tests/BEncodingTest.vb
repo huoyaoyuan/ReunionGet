@@ -2,7 +2,7 @@
 Imports System.Text
 
 Public Class BEncodingTest
-    Private Function ReadFromString(s As String) As Object
+    Private Shared Function ReadFromString(s As String) As Object
         Dim bytes = Encoding.UTF8.GetBytes(s)
         Return BEncoding.Read(bytes, True)
     End Function
@@ -53,7 +53,7 @@ Public Class BEncodingTest
     <Fact>
     Public Sub TestEmptyList()
         Dim o = ReadFromString("le")
-        Assert.Equal(New Object() {}, o)
+        Assert.Equal(Array.Empty(Of Object)(), o)
     End Sub
 
     <Fact>
