@@ -25,4 +25,16 @@ Public Class MagnetTest
                 Dim magnet = New Magnet(CStr(param))
             End Sub)
     End Sub
+
+    <Fact>
+    Public Sub TestTorrentMagnetInteraction()
+        Using resourceStream = GetType(BitTorrentTest).Assembly.GetManifestResourceStream(GetType(BitTorrentTest), "sample.torrent")
+            Assert.NotNull(resourceStream)
+            Dim torrent = BitTorrent.FromStream(resourceStream)
+            Dim magnet = New Magnet("magnet:?xt=urn:btih:D0D14C926E6E99761A2FDCFF27B403D96376EFF6")
+
+            Assert.Equal(magnet, torrent.ToMagnet())
+            Assert.True(magnet.Fits(torrent))
+        End Using
+    End Sub
 End Class

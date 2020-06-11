@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Text;
 using System.Web;
 
 namespace ReunionGet.Parser
 {
-    public class Magnet
+    public class Magnet : IEquatable<Magnet?>
     {
         public MagnetHashAlgorithm HashAlgorithm { get; }
 
@@ -26,10 +28,21 @@ namespace ReunionGet.Parser
             HashValue = new HashBlock(hash);
         }
 
-        private Magnet(MagnetHashAlgorithm hashAlgorithm, byte[] hash)
+        public Magnet(MagnetHashAlgorithm hashAlgorithm, HashBlock hash)
         {
+            int expectedHashSize = hashAlgorithm switch
+            {
+                MagnetHashAlgorithm.BTIH => 20,
+                MagnetHashAlgorithm.SHA1 => 20,
+                MagnetHashAlgorithm.MD5 => 16,
+                _ => throw new ArgumentException($"Unknown hash algoritm {hashAlgorithm}.", nameof(hashAlgorithm))
+            };
+
+            if (hash.Hash.Length != expectedHashSize)
+                throw new ArgumentException($"Hash size mismatch. Expect {expectedHashSize}, got {hash.Hash.Length}.", nameof(hash));
+
             HashAlgorithm = hashAlgorithm;
-            HashValue = new HashBlock(hash);
+            HashValue = hash;
         }
 
         public static bool TryCreate(string source, [NotNullWhen(true)] out Magnet? magnet)
@@ -43,7 +56,7 @@ namespace ReunionGet.Parser
         {
             if (TryGetMagnetParts(uri, out var hashAlgorithm, out byte[]? hash))
             {
-                magnet = new Magnet(hashAlgorithm, hash);
+                magnet = new Magnet(hashAlgorithm, new HashBlock(hash));
                 return true;
             }
             else
@@ -143,6 +156,17 @@ namespace ReunionGet.Parser
             result = null;
             return false;
         }
+
+        public bool Fits(BitTorrent torrent)
+            => HashAlgorithm == MagnetHashAlgorithm.BTIH
+            && HashValue == torrent.InfoHash;
+
+        public override bool Equals(object? obj) => Equals(obj as Magnet);
+        public bool Equals(Magnet? other) => other is { } && HashAlgorithm == other.HashAlgorithm && HashValue.Equals(other.HashValue); // TODO: use is not null
+        public override int GetHashCode() => HashCode.Combine(HashAlgorithm, HashValue);
+
+        public static bool operator ==(Magnet? left, Magnet? right) => EqualityComparer<Magnet>.Default.Equals(left, right);
+        public static bool operator !=(Magnet? left, Magnet? right) => !(left == right);
     }
 
     public enum MagnetHashAlgorithm

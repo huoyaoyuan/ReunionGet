@@ -246,5 +246,7 @@ namespace ReunionGet.Parser
             using var stream = File.OpenRead(path);
             return FromStreamAsync(stream, cancellationToken);
         }
+
+        public Magnet ToMagnet() => new Magnet(MagnetHashAlgorithm.BTIH, InfoHash);
     }
 }
