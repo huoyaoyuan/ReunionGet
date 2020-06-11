@@ -9,6 +9,9 @@ using System.Threading.Tasks;
 
 namespace ReunionGet.Parser
 {
+    /// <summary>
+    /// A parsed bittorrent file.
+    /// </summary>
     public class BitTorrent
     {
         // TODO: use MemberNotNullWhen and is not null
@@ -20,7 +23,10 @@ namespace ReunionGet.Parser
 
         public long PieceLength { get; }
 
-        public ImmutableArray<SHA1Hash> PieceHashes { get; }
+        /// <summary>
+        /// Hash of each piece of files of this torrrent in <see cref="SHA1"/>.
+        /// </summary>
+        public ImmutableArray<HashBlock> PieceHashes { get; }
 
         public long? SingleFileLength { get; }
 
@@ -38,7 +44,10 @@ namespace ReunionGet.Parser
 
         public bool IsPrivate { get; }
 
-        public SHA1Hash InfoHash { get; }
+        /// <summary>
+        /// Hash of the info section of this torrrent in <see cref="SHA1"/>.
+        /// </summary>
+        public HashBlock InfoHash { get; }
         #endregion
 
         #region Additional Members
@@ -48,43 +57,6 @@ namespace ReunionGet.Parser
 
         public DateTimeOffset? CreationTime { get; }
         #endregion
-
-        public readonly struct SHA1Hash : IEquatable<SHA1Hash>
-        {
-            private readonly byte[] _hash;
-
-            public ReadOnlySpan<byte> Hash => _hash ?? throw new InvalidOperationException($"Using uninitialized {nameof(SHA1Hash)} instance.");
-
-            internal SHA1Hash(ReadOnlySpan<byte> byteSpan)
-            {
-                if (byteSpan.Length != 20)
-                    throw new ArgumentException("Bad hash size.", nameof(byteSpan));
-
-                _hash = byteSpan.ToArray();
-            }
-
-            public override bool Equals(object? obj) => obj is SHA1Hash hash && Equals(hash);
-            public bool Equals(SHA1Hash other) => Hash.SequenceEqual(other.Hash);
-            public override int GetHashCode()
-            {
-                HashCode hash = default;
-                foreach (byte b in Hash)
-                    hash.Add(b);
-                return hash.ToHashCode();
-            }
-
-            public static bool operator ==(SHA1Hash left, SHA1Hash right) => left.Equals(right);
-            public static bool operator !=(SHA1Hash left, SHA1Hash right) => !(left == right);
-
-            public override string ToString()
-                => _hash is null
-                ? string.Empty
-                : string.Create(40, _hash, (span, array) =>
-                {
-                    for (int i = 0; i < array.Length; i++)
-                        _ = array[i].TryFormat(span.Slice(i * 2), out _, "X2");
-                });
-        }
 
         public BitTorrent(ReadOnlySpan<byte> content)
         {
@@ -122,11 +94,11 @@ namespace ReunionGet.Parser
                                     case "pieces":
                                     {
                                         var span = reader.ReadBytes();
-                                        var builder = ImmutableArray.CreateBuilder<SHA1Hash>(span.Length / 20);
+                                        var builder = ImmutableArray.CreateBuilder<HashBlock>(span.Length / 20);
 
                                         while (!span.IsEmpty)
                                         {
-                                            builder.Add(new SHA1Hash(span[0..20]));
+                                            builder.Add(new HashBlock(span[0..20].ToArray()));
                                             span = span.Slice(20);
                                         }
 
@@ -184,11 +156,11 @@ namespace ReunionGet.Parser
                             var infoSpan = content[infoStart..infoEnd];
                             using (var sha = SHA1.Create())
                             {
-                                Span<byte> shaSpan = stackalloc byte[20];
+                                byte[] shaSpan = new byte[20];
                                 if (!sha.TryComputeHash(infoSpan, shaSpan, out int bw) || bw != 20)
                                     throw new InvalidOperationException("Failed to compute SHA1 hash.");
 
-                                InfoHash = new SHA1Hash(shaSpan);
+                                InfoHash = new HashBlock(shaSpan);
                             }
 
                             break;

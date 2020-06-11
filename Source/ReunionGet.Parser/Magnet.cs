@@ -10,8 +10,7 @@ namespace ReunionGet.Parser
     {
         public MagnetHashAlgorithm HashAlgorithm { get; }
 
-        private readonly byte[] _hash;
-        public ReadOnlySpan<byte> Hash => _hash;
+        public HashBlock HashValue { get; }
 
         public Magnet(string source)
             : this(new Uri(source))
@@ -24,13 +23,13 @@ namespace ReunionGet.Parser
                 throw new MagnetFormatException();
 
             HashAlgorithm = hashAlgorithm;
-            _hash = hash;
+            HashValue = new HashBlock(hash);
         }
 
         private Magnet(MagnetHashAlgorithm hashAlgorithm, byte[] hash)
         {
             HashAlgorithm = hashAlgorithm;
-            _hash = hash;
+            HashValue = new HashBlock(hash);
         }
 
         public static bool TryCreate(string source, [NotNullWhen(true)] out Magnet? magnet)

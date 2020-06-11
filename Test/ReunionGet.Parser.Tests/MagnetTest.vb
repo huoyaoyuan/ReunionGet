@@ -7,7 +7,7 @@ Public Class MagnetTest
     Public Sub TestBtih(param As Object)
         Dim magnet = New Magnet(CStr(param))
         Assert.Equal(MagnetHashAlgorithm.BTIH, magnet.HashAlgorithm)
-        Assert.True(magnet.Hash.SequenceEqual(HexToBytes("D0D14C926E6E99761A2FDCFF27B403D96376EFF6")))
+        Assert.Equal("D0D14C926E6E99761A2FDCFF27B403D96376EFF6", magnet.HashValue.ToString())
     End Sub
 
     <Theory>
