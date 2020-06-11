@@ -85,32 +85,17 @@ namespace ReunionGet.Parser
                 {
                     case "btih":
                     {
-                        if (hashPart.Length != 40)
-                            return false;
-
                         hashAlgorithm = MagnetHashAlgorithm.BTIH;
-                        hash = new byte[20];
-
-                        for (int i = 0; i < hash.Length; i++)
-                        {
-                            if (!byte.TryParse(hashPart.Slice(i * 2, 2), NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out hash[i]))
-                                return false;
-                        }
+                        if (!TryDecodeHash(hashPart, 20, out hash))
+                            return false;
 
                         break;
                     }
 
                     case "sha1":
                     {
-                        if (hashPart.Length != 32)
-                            return false;
-
                         hashAlgorithm = MagnetHashAlgorithm.SHA1;
-                        hash = new byte[20];
-
-                        if (Base32.DecodeFromUtf16(hashPart, hash, out int bytesConsumed, out int bytesWritten) != OperationStatus.Done
-                            || bytesConsumed != 32
-                            || bytesWritten != 20)
+                        if (!TryDecodeHash(hashPart, 20, out hash))
                             return false;
 
                         break;
@@ -118,17 +103,9 @@ namespace ReunionGet.Parser
 
                     case "md5":
                     {
-                        if (hashPart.Length != 32)
-                            return false;
-
                         hashAlgorithm = MagnetHashAlgorithm.MD5;
-                        hash = new byte[16];
-
-                        for (int i = 0; i < hash.Length; i++)
-                        {
-                            if (!byte.TryParse(hashPart.Slice(i * 2, 2), NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out hash[i]))
-                                return false;
-                        }
+                        if (!TryDecodeHash(hashPart, 16, out hash))
+                            return false;
 
                         break;
                     }
@@ -140,12 +117,39 @@ namespace ReunionGet.Parser
 
             return true;
         }
+
+        private static bool TryDecodeHash(ReadOnlySpan<char> encoded, int expectedLength, [NotNullWhen(true)] out byte[]? result)
+        {
+            // TODO: convert to local function when attributes can be applied
+
+            if (encoded.Length == expectedLength * 2) // Hex
+            {
+                result = new byte[expectedLength];
+                for (int i = 0; i < result.Length; i++)
+                {
+                    if (!byte.TryParse(encoded.Slice(i * 2, 2), NumberStyles.HexNumber, NumberFormatInfo.InvariantInfo, out result[i]))
+                        return false;
+                }
+                return true;
+            }
+            else if (encoded.Length == Base32.GetMaxEncodedToUtf8Length(expectedLength)) // Base32
+            {
+                result = new byte[expectedLength];
+                if (Base32.DecodeFromUtf16(encoded, result, out int bytesConsumed, out int bytesWritten) == OperationStatus.Done
+                    && bytesConsumed == encoded.Length
+                    && bytesWritten == expectedLength)
+                    return true;
+            }
+
+            result = null;
+            return false;
+        }
     }
 
     public enum MagnetHashAlgorithm
     {
         BTIH,
-        MD5,
-        SHA1
+        SHA1,
+        MD5
     }
 }
