@@ -128,8 +128,16 @@ namespace ReunionGet.Parser
                                                         break;
 
                                                     case "path":
-                                                        path = reader.ReadString();
+                                                    {
+                                                        reader.ReadListStart();
+
+                                                        var pathParts = new List<string>();
+                                                        while (!reader.TryReadListDictEnd())
+                                                            pathParts.Add(reader.ReadString());
+
+                                                        path = Path.Combine(pathParts.ToArray());
                                                         break;
+                                                    }
 
                                                     default:
                                                         reader.SkipValue();
