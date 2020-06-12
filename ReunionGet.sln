@@ -24,6 +24,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{385054D4-2
 EndProject
 Project("{778DAE3C-4631-46EA-AA77-85C1314464D9}") = "ReunionGet.Parser.Tests", "Test\ReunionGet.Parser.Tests\ReunionGet.Parser.Tests.vbproj", "{D650938D-769A-41A6-8A20-C117BB065D28}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReunionGet.TorrentInfo", "Source\ReunionGet.TorrentInfo\ReunionGet.TorrentInfo.csproj", "{B36E0A9D-58C1-449A-9393-59928B3A328F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,6 +40,10 @@ Global
 		{D650938D-769A-41A6-8A20-C117BB065D28}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D650938D-769A-41A6-8A20-C117BB065D28}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D650938D-769A-41A6-8A20-C117BB065D28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B36E0A9D-58C1-449A-9393-59928B3A328F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B36E0A9D-58C1-449A-9393-59928B3A328F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B36E0A9D-58C1-449A-9393-59928B3A328F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B36E0A9D-58C1-449A-9393-59928B3A328F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -45,6 +51,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{B5A791DB-4DDA-4242-AA71-9F0B4D3320AA} = {2549F604-BE33-41BC-808A-1BB4649A6011}
 		{D650938D-769A-41A6-8A20-C117BB065D28} = {385054D4-2D39-4F6D-A018-CE1D986D679A}
+		{B36E0A9D-58C1-449A-9393-59928B3A328F} = {2549F604-BE33-41BC-808A-1BB4649A6011}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {50D99955-3D39-4A91-A30C-8E2F7D084CD7}
