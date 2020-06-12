@@ -4,6 +4,7 @@
     <RootNamespace>$(MSBuildProjectName)</RootNamespace>
     <BaseOutputPath>$(MSBuildThisFileDirectory)Artifact\$(MSBuildProjectName)\</BaseOutputPath>
     <BaseIntermediateOutputPath>$(MSBuildThisFileDirectory)Intermediate\$(MSBuildProjectName)\</BaseIntermediateOutputPath>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)PackageOutput\$(Configuration)</PackageOutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
