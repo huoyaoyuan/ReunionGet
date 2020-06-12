@@ -51,6 +51,8 @@ namespace ReunionGet.TorrentInfo
                 Console.Write("Name: ");
                 Console.WriteLine(torrent.Name);
 
+                int bitCometPaddingFiles = 0;
+
                 if (torrent.IsSingleFile)
                 {
                     Console.WriteLine("Mode: single");
@@ -65,6 +67,12 @@ namespace ReunionGet.TorrentInfo
 
                     foreach (var (length, path) in torrent.Files!)
                     {
+                        if (path.StartsWith("_____padding_file_", StringComparison.Ordinal))
+                        {
+                            bitCometPaddingFiles++;
+                            continue;
+                        }
+
                         Console.Write(path);
                         Console.Write("  Size: ");
                         Console.ForegroundColor = ConsoleColor.DarkCyan;
@@ -72,6 +80,9 @@ namespace ReunionGet.TorrentInfo
                         Console.ResetColor();
                     }
                 }
+
+                if (bitCometPaddingFiles > 0)
+                    Console.WriteLine($"BitComet padding files hidden. (Total {bitCometPaddingFiles})");
 
                 return 0;
             }
