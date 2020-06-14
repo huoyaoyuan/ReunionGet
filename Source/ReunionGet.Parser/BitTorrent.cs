@@ -135,7 +135,7 @@ namespace ReunionGet.Parser
                                                         while (!reader.TryReadListDictEnd())
                                                             pathParts.Add(reader.ReadString());
 
-                                                        path = Path.Combine(pathParts.ToArray());
+                                                        path = string.Join('/', pathParts);
                                                         break;
                                                     }
 

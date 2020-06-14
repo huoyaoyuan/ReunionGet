@@ -60,7 +60,7 @@ Public Class BitTorrentTest
             Assert.Null(torrent.SingleFileLength)
             Assert.Equal(32768, torrent.PieceLength)
             Assert.Equal("Sample Folder", torrent.Name)
-            Assert.Equal((38L, "Nested\Sample2.txt"), torrent.Files(0))
+            Assert.Equal((38L, "Nested/Sample2.txt"), torrent.Files(0))
             Assert.Equal((46L, "Sample1.txt"), torrent.Files(1))
             Assert.Equal(1, torrent.PieceHashes.Length)
             Assert.Equal("C6449B60ED556C148F0A50F359479F2C1AA9249E", torrent.PieceHashes(0).ToString())
