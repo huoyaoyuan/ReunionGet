@@ -16,6 +16,8 @@ namespace ReunionGet.TorrentInfo
 
             static string FormatSize(long size)
             {
+                size = size;
+
                 if ((size >> 10) == 0)
                     return $"{size} B";
                 else if ((size >> 20) == 0)
