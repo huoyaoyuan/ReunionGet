@@ -3,6 +3,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 using System.Web;
 
@@ -318,10 +319,31 @@ namespace ReunionGet.Parser
         public static bool operator ==(Magnet? left, Magnet? right) => EqualityComparer<Magnet>.Default.Equals(left, right);
         public static bool operator !=(Magnet? left, Magnet? right) => !(left == right);
 
+        public static bool ExactEquals(Magnet? left, Magnet? right)
+            => (left, right) switch
+            {
+                (null, null) => true,
+                (null, _) => false,
+                (_, null) => false,
+                (var l, var r) => l.ExactEquals(r)
+            };
+
+        public bool ExactEquals(Magnet other)
+            => Equals(other)
+            && DisplayName == other.DisplayName
+            && Trackers.SequenceEqual(other.Trackers) // TODO: use collection equals
+            && ExactLength == other.ExactLength
+            && ExactSource == other.ExactSource
+            && AcceptableSources.SequenceEqual(other.AcceptableSources)
+            && KeywordTopic.SequenceEqual(other.KeywordTopic)
+            && ManifestTopic == other.ManifestTopic;
+
         public override string ToString() => ToString(false);
         public string ToStringBase32() => ToString(true);
 
-        private string ToString(bool useBase32)
+        public string ToFullString(bool useBase32 = false) => ToString(useBase32, true);
+
+        private string ToString(bool useBase32, bool full = false)
         {
             StringBuilder sb = new StringBuilder("magnet:?xt=urn:");
 
@@ -335,8 +357,41 @@ namespace ReunionGet.Parser
             if (hashAlgorithmPart is null)
                 return string.Empty;
 
-            _ = sb.Append(hashAlgorithmPart)
-                .Append(useBase32 ? HashValue.ToBase32() : HashValue.ToString());
+#pragma warning disable IDE0058 // Return value of StringBuilder is meaningless
+            sb.Append(hashAlgorithmPart)
+              .Append(useBase32 ? HashValue.ToBase32() : HashValue.ToString());
+
+            if (full)
+            {
+                if (DisplayName != null)
+                    sb.Append("&dn=")
+                      .Append(HttpUtility.UrlEncode(DisplayName));
+
+                foreach (var tr in Trackers)
+                    sb.Append("&tr=")
+                      .Append(HttpUtility.UrlEncode(tr.ToString()));
+
+                if (ExactLength is long xl)
+                    sb.Append("&xl=")
+                      .Append(xl);
+
+                if (ExactSource is Uri xs)
+                    sb.Append("&xs=")
+                      .Append(HttpUtility.UrlEncode(xs.ToString()));
+
+                foreach (var @as in AcceptableSources)
+                    sb.Append("&as=")
+                      .Append(HttpUtility.UrlEncode(@as.ToString()));
+
+                if (KeywordTopic.Count > 0)
+                    sb.Append("&kt=")
+                      .Append(HttpUtility.UrlEncode(string.Join('+', KeywordTopic)));
+
+                if (ManifestTopic is Uri mt)
+                    sb.Append("&mt=")
+                      .Append(HttpUtility.UrlEncode(mt.ToString()));
+            }
+#pragma warning restore IDE0058
 
             return sb.ToString();
         }

@@ -39,6 +39,7 @@ Public Class MagnetTest
             Dim toMagnet As Magnet = torrent.ToMagnet()
             Assert.Equal(magnet, toMagnet)
             Assert.True(magnet.Fits(torrent))
+            Assert.False(toMagnet.ExactEquals(magnet))
 
             Assert.Equal(torrent.Name, toMagnet.DisplayName)
             Assert.Equal(torrent.SingleFileLength, toMagnet.ExactLength)
@@ -48,6 +49,11 @@ Public Class MagnetTest
             Assert.Empty(toMagnet.AcceptableSources)
             Assert.Empty(toMagnet.KeywordTopic)
             Assert.Null(toMagnet.ManifestTopic)
+
+            Assert.Equal(SHA1Magnet, toMagnet.ToString())
+            Assert.Equal(Base32Magnet, toMagnet.ToStringBase32())
+            Assert.Equal("magnet:?xt=urn:btih:D0D14C926E6E99761A2FDCFF27B403D96376EFF6&dn=sample.txt&tr=udp%3a%2f%2ftracker.openbittorrent.com%3a80%2f&xl=20",
+                         toMagnet.ToFullString())
         End Using
     End Sub
 
@@ -61,5 +67,33 @@ Public Class MagnetTest
         Assert.NotEqual(magnet1.OriginalString, magnet2.OriginalString)
         Assert.Equal(Base32Magnet, magnet1.ToStringBase32())
         Assert.Equal(SHA1Magnet, magnet2.ToString())
+    End Sub
+
+    <Fact>
+    Public Sub TestMagnetParts()
+        Const FullMagnet = "magnet:?xt=urn:btih:D0D14C926E6E99761A2FDCFF27B403D96376EFF6&dn=sample.txt" &
+            "&as=http%3a%2f%2fexample.com%2fsample1.txt" &
+            "&as=http%3a%2f%2fexample.com%2fsample2.txt" &
+            "&kt=example%2btxt" &
+            "&tr=udp%3a%2f%2ftracker.openbittorrent.com%3a80%2f&xl=20" &
+            "&xs=http%3a%2f%2fexample.com%2fsample.txt" &
+            "&mt=http%3a%2f%2fexample.com%2fexampletopic"
+
+        Dim m = New Magnet(FullMagnet)
+
+        Assert.Equal(FullMagnet, m.OriginalString)
+        Assert.Equal(New Uri() {New Uri("udp://tracker.openbittorrent.com:80/")}, m.Trackers)
+        Assert.Equal(20L, m.ExactLength)
+        Assert.Equal("sample.txt", m.DisplayName)
+        Assert.Equal(New Uri("http://example.com/sample.txt"), m.ExactSource)
+        Assert.Equal(New Uri() {
+                         New Uri("http://example.com/sample1.txt"),
+                         New Uri("http://example.com/sample2.txt")
+                     }, m.AcceptableSources)
+        Assert.Equal(New String() {"example", "txt"}, m.KeywordTopic)
+        Assert.Equal(New Uri("http://example.com/exampletopic"), m.ManifestTopic)
+
+        Assert.NotEqual(FullMagnet, m.ToFullString())
+        Assert.True(m.ExactEquals(New Magnet(m.ToFullString())))
     End Sub
 End Class
