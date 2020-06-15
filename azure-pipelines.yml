@@ -49,14 +49,18 @@ jobs:
       matrix:
         Windows:
           imageName: 'windows-latest'
+          projects: |
+            **/*.*proj
         Linux:
           imageName: 'ubuntu-latest'
+          projects: |
+            Source/Portable/**/*.*proj
+            Test/**/*.*proj
 
     pool:
       vmImage: '$(imageName)'
 
     variables:
-      solution: 'ReunionGet.sln'
       buildConfiguration: 'Release'
 
     steps:
@@ -70,21 +74,21 @@ jobs:
       displayName: 'Restore'
       inputs:
         command: 'restore'
-        projects: '$(solution)'
+        projects: '$(projects)'
         feedsToUse: 'select'
 
     - task: DotNetCoreCLI@2
       displayName: 'Build'
       inputs:
         command: 'build'
-        projects: '$(solution)'
+        projects: '$(projects)'
         arguments: '--configuration $(buildConfiguration)'
 
     - task: DotNetCoreCLI@2
       displayName: 'Pack'
       inputs:
         command: 'pack'
-        packagesToPack: '$(solution)'
+        packagesToPack: '$(projects)'
         nobuild: true
         versioningScheme: 'off'
 
@@ -99,5 +103,5 @@ jobs:
       displayName: 'Test'
       inputs:
         command: 'test'
-        projects: '$(solution)'
+        projects: '$(projects)'
         arguments: '--configuration $(buildConfiguration)'
