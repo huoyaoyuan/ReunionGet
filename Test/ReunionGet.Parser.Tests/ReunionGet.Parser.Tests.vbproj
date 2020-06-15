@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\ReunionGet.Parser\ReunionGet.Parser.csproj" />
+    <ProjectReference Include="..\..\Source\Portable\ReunionGet.Parser\ReunionGet.Parser.csproj" />
   </ItemGroup>
 
   <ItemGroup>
