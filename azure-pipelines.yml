@@ -84,14 +84,6 @@ jobs:
         projects: '$(projects)'
         arguments: '--configuration $(buildConfiguration)'
 
-    - task: DotNetCoreCLI@2
-      displayName: 'Pack'
-      inputs:
-        command: 'pack'
-        packagesToPack: '$(projects)'
-        nobuild: true
-        versioningScheme: 'off'
-
     - task: PublishBuildArtifacts@1
       displayName: 'Publish Artifacts'
       inputs:
