@@ -261,6 +261,11 @@ namespace ReunionGet.Parser
             return FromStreamAsync(stream, cancellationToken);
         }
 
-        public Magnet ToMagnet() => new Magnet(MagnetHashAlgorithm.BTIH, InfoHash);
+        public Magnet ToMagnet()
+            => new Magnet(MagnetHashAlgorithm.BTIH,
+                InfoHash,
+                displayName: Name,
+                trackers: AnnounceList ?? new[] { Announce },
+                exactLength: SingleFileLength);
     }
 }

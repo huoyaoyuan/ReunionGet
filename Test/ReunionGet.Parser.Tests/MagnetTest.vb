@@ -36,8 +36,18 @@ Public Class MagnetTest
             Dim torrent = BitTorrent.FromStream(resourceStream)
             Dim magnet = New Magnet(SHA1Magnet)
 
-            Assert.Equal(magnet, torrent.ToMagnet())
+            Dim toMagnet As Magnet = torrent.ToMagnet()
+            Assert.Equal(magnet, toMagnet)
             Assert.True(magnet.Fits(torrent))
+
+            Assert.Equal(torrent.Name, toMagnet.DisplayName)
+            Assert.Equal(torrent.SingleFileLength, toMagnet.ExactLength)
+            Assert.Null(toMagnet.OriginalString)
+            Assert.Equal(New Uri() {New Uri("udp://tracker.openbittorrent.com:80/")}, toMagnet.Trackers)
+            Assert.Null(toMagnet.ExactSource)
+            Assert.Empty(toMagnet.AcceptableSources)
+            Assert.Empty(toMagnet.KeywordTopic)
+            Assert.Null(toMagnet.ManifestTopic)
         End Using
     End Sub
 
