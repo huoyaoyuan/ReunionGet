@@ -55,6 +55,8 @@ namespace ReunionGet.Parser
 
         public IReadOnlyList<Uri>? AnnounceList { get; }
 
+        public string? CreatedBy { get; }
+
         public DateTimeOffset? CreationTime { get; }
         #endregion
 
@@ -196,6 +198,10 @@ namespace ReunionGet.Parser
 
                         case "creation date":
                             CreationTime = DateTimeOffset.FromUnixTimeSeconds(reader.ReadInt64());
+                            break;
+
+                        case "created by":
+                            CreatedBy = reader.ReadString();
                             break;
 
                         default:

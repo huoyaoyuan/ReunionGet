@@ -56,6 +56,10 @@ Public Class BitTorrentTest
             Dim torrent = BitTorrent.FromStream(resourceStream)
 
             Assert.Equal("udp://tracker.publicbt.com:80/announce", torrent.Announce.AbsoluteUri)
+            Assert.Equal(New Uri() {
+                            New Uri("udp://tracker.publicbt.com:80/announce"),
+                            New Uri("udp://tracker.openbittorrent.com:80/announce")
+                         }, torrent.AnnounceList)
             Assert.False(torrent.IsSingleFile)
             Assert.Null(torrent.SingleFileLength)
             Assert.Equal(32768, torrent.PieceLength)
@@ -67,6 +71,7 @@ Public Class BitTorrentTest
             Assert.Equal(84L, torrent.TotalLength)
             Assert.False(torrent.IsPrivate)
             Assert.Equal(#2020/6/13 17:29:37#, torrent.CreationTime.Value.UtcDateTime)
+            Assert.Equal("BitComet/1.67", torrent.CreatedBy)
             Assert.Equal("C98B4C1D23A1A93C18F93B19104DEE5F8E0F9B56", torrent.InfoHash.ToString())
         End Using
     End Sub
