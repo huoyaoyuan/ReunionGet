@@ -1,4 +1,4 @@
-﻿# EditorConfig is awesome: http://editorconfig.org
+# EditorConfig is awesome: http://editorconfig.org
 # You can learn more about editorconfig here: https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
 root = true
 
@@ -169,6 +169,9 @@ dotnet_diagnostic.IDE0005.severity = warning
 
 # IDE0055: Fix formatting
 dotnet_diagnostic.IDE0055.severity = warning
+
+# CA1032: Implement standard exception constructor
+dotnet_diagnostic.CA1032.severity = silent
 
 # CA1034: Nested types should not be visible
 dotnet_diagnostic.CA1034.severity = none
