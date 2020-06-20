@@ -20,6 +20,7 @@ namespace ReunionGet.Aria2Rpc
 
         private readonly HttpClient _httpClient;
         private readonly string _tokenParam;
+        private readonly Random _random = new Random();
 
         public void Dispose() => _httpClient.Dispose();
 
@@ -39,24 +40,30 @@ namespace ReunionGet.Aria2Rpc
 
         private async Task<TResponse> DoRpcAsync<TRequest, TResponse>(string method, TRequest @params)
         {
-            var rpcRequest = new JsonRpcRequest<TRequest>(method, @params);
+            var rpcRequest = new JsonRpcRequest<TRequest>(_random.Next(), method, @params);
             var httpResponse = await _httpClient.PostAsJsonAsync("jsonrpc", rpcRequest, s_serializerOptions)
                 .ConfigureAwait(false);
 
             var rpcResponse = await httpResponse.Content.ReadFromJsonAsync<JsonRpcResponse<TResponse>>(s_serializerOptions)
                 .ConfigureAwait(false);
 
+            if (rpcRequest.Id != rpcResponse.Id)
+                throw new InvalidOperationException("Bad response id from remote.");
+
             return rpcResponse.CheckSuccessfulResult();
         }
 
         private async Task DoRpcAsync<TRequest>(string method, TRequest @params)
         {
-            var rpcRequest = new JsonRpcRequest<TRequest>(method, @params);
+            var rpcRequest = new JsonRpcRequest<TRequest>(_random.Next(), method, @params);
             var httpResponse = await _httpClient.PostAsJsonAsync("jsonrpc", rpcRequest, s_serializerOptions)
                 .ConfigureAwait(false);
 
-            var rpcResponse = await httpResponse.Content.ReadFromJsonAsync<JsonRpcResponse<object>>(s_serializerOptions)
+            var rpcResponse = await httpResponse.Content.ReadFromJsonAsync<JsonRpcResponse>(s_serializerOptions)
                 .ConfigureAwait(false);
+
+            if (rpcRequest.Id != rpcResponse.Id)
+                throw new InvalidOperationException("Bad response id from remote.");
 
             rpcResponse.CheckSuccess();
         }

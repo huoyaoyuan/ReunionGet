@@ -1,36 +1,65 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text.Json.Serialization;
+
+#pragma warning disable CA1822 // Mark member static
 
 namespace ReunionGet.Aria2Rpc.Json
 {
-    internal abstract class JsonRpcMessage
+    internal class JsonRpcRequest<T>
     {
-        public string Jsonrpc { get; set; } = "2.0";
+        [JsonPropertyName("jsonrpc")]
+        public string Version => "2.0";
 
-        public string Id { get; set; } = "NONEED";
-    }
+        public int Id { get; }
 
-    internal class JsonRpcRequest<T> : JsonRpcMessage
-    {
-        public string Method { get; set; }
+        public string Method { get; }
 
-        public T Params { get; set; }
+        public T Params { get; }
 
-        public JsonRpcRequest(string method, T @params)
+        public JsonRpcRequest(int id, string method, T @params)
         {
+            Id = id;
             Method = method;
             Params = @params;
         }
     }
 
-    internal class JsonRpcResponse<T> : JsonRpcMessage
+    internal class JsonRpcResponse
     {
-        // TODO: use T??
+        [JsonPropertyName("jsonrpc")]
+        public string Version => "2.0"; // strawman
 
-        [MaybeNull, AllowNull]
-        public T Result { get; set; } = default;
+        public int Id { get; }
 
-        public JsonRpcError? Error { get; set; }
+        public JsonRpcError? Error { get; }
+
+        [JsonConstructor]
+        public JsonRpcResponse(string version, int id, JsonRpcError? error)
+        {
+            if (version != Version)
+                throw new ArgumentException("Bad jsonrpc version.", nameof(version));
+
+            Id = id;
+            Error = error;
+        }
+
+        public void CheckSuccess()
+        {
+            if (Error != null)
+                throw new JsonRpcException(Error);
+        }
+    }
+
+    internal class JsonRpcResponse<T> : JsonRpcResponse
+    {
+        [MaybeNull, AllowNull] // TODO: use T??
+        public T Result { get; }
+
+        [JsonConstructor]
+        public JsonRpcResponse(string version, int id, [MaybeNull] T result, JsonRpcError? error)
+            : base(version, id, error)
+            => Result = result;
 
         [return: NotNull]
         public T CheckSuccessfulResult()
@@ -39,12 +68,6 @@ namespace ReunionGet.Aria2Rpc.Json
 
             return Result
                 ?? throw new InvalidOperationException("The response object hasn't been correctly deserialized, or the remote endpoint doesn't follow the standard.");
-        }
-
-        public void CheckSuccess()
-        {
-            if (Error != null)
-                throw new JsonRpcException(Error);
         }
     }
 
