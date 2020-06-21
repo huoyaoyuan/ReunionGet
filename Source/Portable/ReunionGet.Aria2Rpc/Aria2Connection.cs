@@ -14,7 +14,9 @@ namespace ReunionGet.Aria2Rpc
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             Converters =
             {
-                new ValueTupleToArrayConverter()
+                new ValueTupleToArrayConverter(),
+                new BoolConverter(),
+                new JsonRpcParamsConverter()
             }
         };
 
@@ -51,21 +53,6 @@ namespace ReunionGet.Aria2Rpc
                 throw new InvalidOperationException("Bad response id from remote.");
 
             return rpcResponse.CheckSuccessfulResult();
-        }
-
-        private async Task DoRpcAsync<TRequest>(string method, TRequest @params)
-        {
-            var rpcRequest = new JsonRpcRequest<TRequest>(_random.Next(), method, @params);
-            var httpResponse = await _httpClient.PostAsJsonAsync("jsonrpc", rpcRequest, s_serializerOptions)
-                .ConfigureAwait(false);
-
-            var rpcResponse = await httpResponse.Content.ReadFromJsonAsync<JsonRpcResponse>(s_serializerOptions)
-                .ConfigureAwait(false);
-
-            if (rpcRequest.Id != rpcResponse.Id)
-                throw new InvalidOperationException("Bad response id from remote.");
-
-            rpcResponse.CheckSuccess();
         }
     }
 }

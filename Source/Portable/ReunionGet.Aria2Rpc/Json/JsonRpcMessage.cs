@@ -25,7 +25,7 @@ namespace ReunionGet.Aria2Rpc.Json
         }
     }
 
-    internal class JsonRpcResponse
+    internal class JsonRpcResponse<T>
     {
         [JsonPropertyName("jsonrpc")]
         public string Version => "2.0"; // strawman
@@ -35,12 +35,13 @@ namespace ReunionGet.Aria2Rpc.Json
         public JsonRpcError? Error { get; }
 
         [JsonConstructor]
-        public JsonRpcResponse(string version, int id, JsonRpcError? error)
+        public JsonRpcResponse(string version, int id, [MaybeNull] T result, JsonRpcError? error)
         {
             if (version != Version)
                 throw new ArgumentException("Bad jsonrpc version.", nameof(version));
 
             Id = id;
+            Result = result;
             Error = error;
         }
 
@@ -49,17 +50,9 @@ namespace ReunionGet.Aria2Rpc.Json
             if (Error != null)
                 throw new JsonRpcException(Error);
         }
-    }
 
-    internal class JsonRpcResponse<T> : JsonRpcResponse
-    {
         [MaybeNull, AllowNull] // TODO: use T??
         public T Result { get; }
-
-        [JsonConstructor]
-        public JsonRpcResponse(string version, int id, [MaybeNull] T result, JsonRpcError? error)
-            : base(version, id, error)
-            => Result = result;
 
         [return: NotNull]
         public T CheckSuccessfulResult()
