@@ -28,9 +28,7 @@ namespace ReunionGet.Aria2Rpc.Json
         }
     }
 
-#pragma warning disable CA1812 // Instantialized by reflection
     internal class ValueTupleConverter<T> : JsonConverter<T>
-#pragma warning restore CA1812
     {
         private delegate T ReadDelegate(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options);
         private delegate void WriteDelegate(Utf8JsonWriter writer, T value, JsonSerializerOptions options);
