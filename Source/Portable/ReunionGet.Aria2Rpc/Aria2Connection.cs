@@ -57,5 +57,9 @@ namespace ReunionGet.Aria2Rpc
 
             return rpcResponse.CheckSuccessfulResult();
         }
+
+        public Task<TResponse[]> BatchAsync<TRequest, TResponse>(params TRequest[] @params)
+            where TRequest : JsonRpcParams, IJsonRpcRequest<TResponse>
+            => DoRpcAsync<RpcBatchParams<TRequest, TResponse>, TResponse[]>(new RpcBatchParams<TRequest, TResponse>(@params));
     }
 }
