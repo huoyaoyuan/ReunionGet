@@ -40,11 +40,14 @@ namespace ReunionGet.Aria2Rpc
         {
         }
 
-        private async Task<TResponse> DoRpcAsync<TRequest, TResponse>(string method, TRequest @params)
+        public async Task<TResponse> DoRpcAsync<TRequest, TResponse>(TRequest @params)
+            where TRequest : JsonRpcParams, IJsonRpcRequest<TResponse>
         {
-            var rpcRequest = new JsonRpcRequest<TRequest>(_random.Next(), method, @params);
+            @params.Token = _tokenParam;
+            var rpcRequest = new JsonRpcRequest<TRequest>(_random.Next(), @params.MethodName, @params);
             var httpResponse = await _httpClient.PostAsJsonAsync("jsonrpc", rpcRequest, s_serializerOptions)
                 .ConfigureAwait(false);
+            @params.Token = null;
 
             var rpcResponse = await httpResponse.Content.ReadFromJsonAsync<JsonRpcResponse<TResponse>>(s_serializerOptions)
                 .ConfigureAwait(false);

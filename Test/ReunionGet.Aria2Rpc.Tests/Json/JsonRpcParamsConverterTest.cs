@@ -8,6 +8,7 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
     {
         private class TestParams : JsonRpcParams
         {
+            protected internal override string MethodName => "Shouldn't be serialized";
             public string? Param2 { get; set; }
             public int Param1 { get; set; }
         }

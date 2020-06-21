@@ -96,4 +96,14 @@ namespace ReunionGet.Aria2Rpc.Json
         public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
             => _writeDelegate(writer, value, options);
     }
+
+    /// <summary>
+    /// Associate a rpc parameter type to its method name and response.
+    /// </summary>
+    /// <typeparam name="TResponse">The type of response of this rpc request.
+    /// Use <see cref="bool"/> if accepts "OK".</typeparam>
+    public interface IJsonRpcRequest<TResponse>
+    {
+        string MethodName { get; }
+    }
 }
