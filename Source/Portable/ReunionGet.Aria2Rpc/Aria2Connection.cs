@@ -17,7 +17,9 @@ namespace ReunionGet.Aria2Rpc
             {
                 new ValueTupleToArrayConverter(),
                 new BoolConverter(),
-                new JsonRpcParamsConverter()
+                new JsonRpcParamsConverter(),
+                new QuotedIntConverter(),
+                new QuotedLongConverter()
             },
             IgnoreNullValues = true
         };
