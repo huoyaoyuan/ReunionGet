@@ -10,6 +10,8 @@ namespace ReunionGet.Aria2Rpc.Json
     {
         protected internal abstract string MethodName { get; }
 
+        protected internal virtual bool ShutsDown => false;
+
         internal string? Token { get; set; }
 
         internal static PropertyInfo TokenProperty = typeof(RpcParams).GetProperty(nameof(Token), BindingFlags.NonPublic | BindingFlags.Instance)!;

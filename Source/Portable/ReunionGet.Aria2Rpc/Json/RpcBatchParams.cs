@@ -16,6 +16,8 @@ namespace ReunionGet.Aria2Rpc.Json
     {
         protected internal override string MethodName => "system.multicall";
 
+        protected internal override bool ShutsDown => Params.Any(p => p.Params.ShutsDown);
+
         public ParamHolder<TResponse>[] Params { get; set; }
 
         public RpcBatchParams(params RpcParams<TResponse>[] requests)
@@ -26,6 +28,10 @@ namespace ReunionGet.Aria2Rpc.Json
     {
         protected internal override string MethodName => "system.multicall";
 
+        protected internal override bool ShutsDown
+            => Params.Item1.Params.ShutsDown
+            || Params.Item2.Params.ShutsDown;
+
         public (ParamHolder<T1>, ParamHolder<T2>) Params { get; set; }
 
         public RpcBatchParams(RpcParams<T1> param1, RpcParams<T2> param2)
@@ -35,6 +41,11 @@ namespace ReunionGet.Aria2Rpc.Json
     public sealed class RpcBatchParams<T1, T2, T3> : RpcParams<(T1, T2, T3)>
     {
         protected internal override string MethodName => "system.multicall";
+
+        protected internal override bool ShutsDown
+            => Params.Item1.Params.ShutsDown
+            || Params.Item2.Params.ShutsDown
+            || Params.Item3.Params.ShutsDown;
 
         public (ParamHolder<T1>, ParamHolder<T2>, ParamHolder<T3>) Params { get; set; }
 

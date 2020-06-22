@@ -455,5 +455,22 @@ namespace ReunionGet.Aria2Rpc
         /// <returns>Version info.</returns>
         public Task<Aria2VersionInfo> GetVersionAsync()
             => DoRpcAsync(new GetVersionRequest());
+
+        /// <summary>
+        /// Shuts down aria2.
+        /// </summary>
+        /// <returns>OK(<see langword="true"/>) if success.</returns>
+        public Task<bool> ShutdownAsync()
+            => DoRpcAsync(new ShutdownRequest());
+
+        /// <summary>
+        /// Shuts down aria2.
+        /// </summary>
+        /// <remarks>
+        /// This method behaves like <see cref="ShutdownAsync"/> without performing any actions which take time.
+        /// </remarks>
+        /// <returns>OK(<see langword="true"/>) if success.</returns>
+        public Task<bool> ForceShutdownAsync()
+            => DoRpcAsync(new ForceShutdownRequest());
     }
 }
