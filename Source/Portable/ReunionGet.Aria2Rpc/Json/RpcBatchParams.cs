@@ -2,10 +2,9 @@
 
 namespace ReunionGet.Aria2Rpc.Json
 {
-    public sealed class RpcBatchParams<TRequest, TResponse> : JsonRpcParams, IJsonRpcRequest<TResponse[]>
-        where TRequest : JsonRpcParams, IJsonRpcRequest<TResponse>
+    public sealed class RpcBatchParams<TResponse> : JsonRpcParams<TResponse[]>
     {
-        string IJsonRpcRequest<TResponse[]>.MethodName => "system.multicall";
+        protected internal override string MethodName => "system.multicall";
 
         public ParamHolder[] Params { get; set; }
 
@@ -13,13 +12,13 @@ namespace ReunionGet.Aria2Rpc.Json
         public readonly struct ParamHolder
 #pragma warning restore CA1815 // Override Equals and equality operator on value types
         {
-            public string MethodName => ((IJsonRpcRequest<TResponse[]>)Params).MethodName;
-            public TRequest Params { get; }
+            public string MethodName => Params.MethodName;
+            public JsonRpcParams<TResponse> Params { get; }
 
-            public ParamHolder(TRequest value) => Params = value;
+            public ParamHolder(JsonRpcParams<TResponse> value) => Params = value;
         }
 
-        public RpcBatchParams(params TRequest[] requests)
+        public RpcBatchParams(params JsonRpcParams<TResponse>[] requests)
             => Params = requests.Select(x => new ParamHolder(x)).ToArray();
     }
 }

@@ -26,11 +26,32 @@ namespace ReunionGet.Aria2Rpc.Json
             ?? throw new NotSupportedException($"Cannot get method handle of {nameof(Utf8JsonWriter)}.{nameof(Utf8JsonWriter.WriteStringValue)}");
     }
 
+    /// <summary>
+    /// The abstraction of rpc params used for serialization.
+    /// Don't inherit from this directly. Inherit from <see cref="JsonRpcParams{TResponse}"/>.
+    /// </summary>
     public abstract class JsonRpcParams
     {
+        protected internal abstract string MethodName { get; }
+
         internal string? Token { get; set; }
 
         internal static PropertyInfo TokenProperty = typeof(JsonRpcParams).GetProperty(nameof(Token), BindingFlags.NonPublic | BindingFlags.Instance)!;
+
+        private protected JsonRpcParams()
+        {
+            // Prevents external inheritance
+        }
+    }
+
+    /// <summary>
+    /// Associate a rpc parameter type to its and response.
+    /// </summary>
+    /// <typeparam name="TResponse">The type of response of this rpc request.
+    /// Use <see cref="bool"/> if accepts "OK".</typeparam>
+    public abstract class JsonRpcParams<TResponse> : JsonRpcParams
+    {
+        // No additional member
     }
 
     internal class JsonRpcParamsConverter<T> : JsonConverter<T>
@@ -95,15 +116,5 @@ namespace ReunionGet.Aria2Rpc.Json
 
         public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
             => _writeDelegate(writer, value, options);
-    }
-
-    /// <summary>
-    /// Associate a rpc parameter type to its method name and response.
-    /// </summary>
-    /// <typeparam name="TResponse">The type of response of this rpc request.
-    /// Use <see cref="bool"/> if accepts "OK".</typeparam>
-    public interface IJsonRpcRequest<TResponse>
-    {
-        string MethodName { get; }
     }
 }

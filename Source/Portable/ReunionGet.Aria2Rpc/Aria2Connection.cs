@@ -40,11 +40,10 @@ namespace ReunionGet.Aria2Rpc
         {
         }
 
-        public async Task<TResponse> DoRpcAsync<TRequest, TResponse>(TRequest @params)
-            where TRequest : JsonRpcParams, IJsonRpcRequest<TResponse>
+        public async Task<TResponse> DoRpcAsync<TResponse>(JsonRpcParams<TResponse> @params)
         {
             @params.Token = _tokenParam;
-            var rpcRequest = new JsonRpcRequest<TRequest>(_random.Next(), @params.MethodName, @params);
+            var rpcRequest = new JsonRpcRequest(_random.Next(), @params.MethodName, @params);
             var httpResponse = await _httpClient.PostAsJsonAsync("jsonrpc", rpcRequest, s_serializerOptions)
                 .ConfigureAwait(false);
             @params.Token = null;
@@ -58,8 +57,7 @@ namespace ReunionGet.Aria2Rpc
             return rpcResponse.CheckSuccessfulResult();
         }
 
-        public Task<TResponse[]> BatchAsync<TRequest, TResponse>(params TRequest[] @params)
-            where TRequest : JsonRpcParams, IJsonRpcRequest<TResponse>
-            => DoRpcAsync<RpcBatchParams<TRequest, TResponse>, TResponse[]>(new RpcBatchParams<TRequest, TResponse>(@params));
+        public Task<TResponse[]> BatchAsync<TResponse>(params JsonRpcParams<TResponse>[] @params)
+            => DoRpcAsync(new RpcBatchParams<TResponse>(@params));
     }
 }

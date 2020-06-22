@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace ReunionGet.Aria2Rpc.Json
 {
-    internal class JsonRpcRequest<T>
+    internal class JsonRpcRequest
     {
         [JsonPropertyName("jsonrpc")]
         public string Version => "2.0";
@@ -15,9 +15,9 @@ namespace ReunionGet.Aria2Rpc.Json
 
         public string Method { get; }
 
-        public T Params { get; }
+        public object Params { get; }
 
-        public JsonRpcRequest(int id, string method, T @params)
+        public JsonRpcRequest(int id, string method, object @params)
         {
             Id = id;
             Method = method;
