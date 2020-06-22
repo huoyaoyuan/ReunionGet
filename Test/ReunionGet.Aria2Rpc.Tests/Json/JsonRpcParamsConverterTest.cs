@@ -1,12 +1,13 @@
 ﻿using System.Text.Json;
 using ReunionGet.Aria2Rpc.Json;
+using ReunionGet.Aria2Rpc.Json.Converters;
 using Xunit;
 
 namespace ReunionGet.Aria2Rpc.Tests.Json
 {
     public class JsonRpcParamsConverterTest
     {
-        private class TestParams : JsonRpcParams<bool>
+        private class TestParams : RpcParams<bool>
         {
             protected internal override string MethodName => "test.testMethod";
             public string? Param2 { get; set; }

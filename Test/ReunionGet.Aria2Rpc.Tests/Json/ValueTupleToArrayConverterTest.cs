@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using ReunionGet.Aria2Rpc.Json;
+using ReunionGet.Aria2Rpc.Json.Converters;
 using Xunit;
 
 namespace ReunionGet.Aria2Rpc.Test.Json

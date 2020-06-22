@@ -6,19 +6,19 @@ using System.Reflection.Emit;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ReunionGet.Aria2Rpc.Json
+namespace ReunionGet.Aria2Rpc.Json.Converters
 {
-    using WriteAction = Action<Utf8JsonWriter, JsonRpcParams, JsonSerializerOptions>;
+    using WriteAction = Action<Utf8JsonWriter, RpcParams, JsonSerializerOptions>;
 
     internal class JsonRpcParamsConverter : JsonConverterFactory
     {
         public override JsonConverter CreateConverter(Type typeToConvert, JsonSerializerOptions options)
             => new JsonRpcParamsConverterImpl();
 
-        public override bool CanConvert(Type typeToConvert) => typeof(JsonRpcParams).IsAssignableFrom(typeToConvert);
+        public override bool CanConvert(Type typeToConvert) => typeof(RpcParams).IsAssignableFrom(typeToConvert);
     }
 
-    internal class JsonRpcParamsConverterImpl : JsonConverter<JsonRpcParams>
+    internal class JsonRpcParamsConverterImpl : JsonConverter<RpcParams>
     {
 
         internal static MethodInfo GetTypeFromHandle = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle))
@@ -36,10 +36,10 @@ namespace ReunionGet.Aria2Rpc.Json
             = new Dictionary<Type, WriteAction>();
 
         [DoesNotReturn]
-        public override JsonRpcParams Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        public override RpcParams Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
             => throw new NotSupportedException("Json rpc params are only meant to be serialized.");
 
-        public override void Write(Utf8JsonWriter writer, JsonRpcParams value, JsonSerializerOptions options)
+        public override void Write(Utf8JsonWriter writer, RpcParams value, JsonSerializerOptions options)
         {
             var valueType = value.GetType();
 
@@ -57,7 +57,7 @@ namespace ReunionGet.Aria2Rpc.Json
             var properties = valueType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
             var writeMethod = new DynamicMethod("WriteDelegate", typeof(void),
-                new[] { typeof(Utf8JsonWriter), typeof(JsonRpcParams), typeof(JsonSerializerOptions) });
+                new[] { typeof(Utf8JsonWriter), typeof(RpcParams), typeof(JsonSerializerOptions) });
             var writeBuilder = writeMethod.GetILGenerator();
 
             var jmpLabel = writeBuilder.DefineLabel();
@@ -72,7 +72,7 @@ namespace ReunionGet.Aria2Rpc.Json
             writeBuilder.Emit(OpCodes.Stloc, typedLocal);
 
             writeBuilder.Emit(OpCodes.Ldloc, typedLocal);
-            writeBuilder.EmitCall(OpCodes.Callvirt, JsonRpcParams.TokenProperty.GetMethod!, null);
+            writeBuilder.EmitCall(OpCodes.Callvirt, RpcParams.TokenProperty.GetMethod!, null);
             writeBuilder.Emit(OpCodes.Stloc, strLocal);
             writeBuilder.Emit(OpCodes.Ldloc, strLocal);
             writeBuilder.Emit(OpCodes.Brfalse_S, jmpLabel);
@@ -84,7 +84,7 @@ namespace ReunionGet.Aria2Rpc.Json
             writeBuilder.MarkLabel(jmpLabel);
             foreach (var p in properties)
             {
-                if (p == JsonRpcParams.TokenProperty)
+                if (p == RpcParams.TokenProperty)
                     continue;
 
                 if (p.GetMethod is null)
@@ -99,7 +99,7 @@ namespace ReunionGet.Aria2Rpc.Json
                 writeBuilder.Emit(OpCodes.Ldloc, typedLocal);
                 writeBuilder.EmitCall(OpCodes.Callvirt, p.GetMethod, null);
                 writeBuilder.Emit(OpCodes.Ldarg_2);
-                writeBuilder.EmitCall(OpCodes.Callvirt, typeof(JsonConverter<>).MakeGenericType(p.PropertyType).GetMethod(nameof(JsonConverter<JsonRpcParams>.Write))!, null);
+                writeBuilder.EmitCall(OpCodes.Callvirt, typeof(JsonConverter<>).MakeGenericType(p.PropertyType).GetMethod(nameof(JsonConverter<RpcParams>.Write))!, null);
             }
             writeBuilder.Emit(OpCodes.Ldarg_0);
             writeBuilder.EmitCall(OpCodes.Callvirt, WriteEndArray, null);

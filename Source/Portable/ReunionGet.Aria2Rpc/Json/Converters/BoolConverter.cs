@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ReunionGet.Aria2Rpc.Json
+namespace ReunionGet.Aria2Rpc.Json.Converters
 {
     internal class BoolConverter : JsonConverter<bool>
     {

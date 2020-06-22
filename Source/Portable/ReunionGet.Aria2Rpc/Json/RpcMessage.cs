@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace ReunionGet.Aria2Rpc.Json
 {
-    internal class JsonRpcRequest
+    internal class RpcRequest
     {
         [JsonPropertyName("jsonrpc")]
         public string Version => "2.0";
@@ -15,9 +15,9 @@ namespace ReunionGet.Aria2Rpc.Json
 
         public string Method { get; }
 
-        public JsonRpcParams Params { get; }
+        public RpcParams Params { get; }
 
-        public JsonRpcRequest(int id, string method, JsonRpcParams @params)
+        public RpcRequest(int id, string method, RpcParams @params)
         {
             Id = id;
             Method = method;
@@ -25,17 +25,17 @@ namespace ReunionGet.Aria2Rpc.Json
         }
     }
 
-    internal class JsonRpcResponse<T>
+    internal class RpcResponse<T>
     {
         [JsonPropertyName("jsonrpc")]
         public string Version => "2.0"; // strawman
 
         public int Id { get; }
 
-        public JsonRpcError? Error { get; }
+        public RpcError? Error { get; }
 
         [JsonConstructor]
-        public JsonRpcResponse(string version, int id, [MaybeNull] T result, JsonRpcError? error)
+        public RpcResponse(string version, int id, [MaybeNull] T result, RpcError? error)
         {
             if (version != Version)
                 throw new ArgumentException("Bad jsonrpc version.", nameof(version));
@@ -64,7 +64,7 @@ namespace ReunionGet.Aria2Rpc.Json
         }
     }
 
-    internal class JsonRpcError
+    internal class RpcError
     {
         public int Code { get; set; }
 
@@ -75,7 +75,7 @@ namespace ReunionGet.Aria2Rpc.Json
     {
         public int Code { get; }
 
-        internal JsonRpcException(JsonRpcError errorObj)
+        internal JsonRpcException(RpcError errorObj)
             : base(errorObj.Message ?? $"A json RPC operation failed with error code {errorObj.Code}.")
             => Code = errorObj.Code;
     }

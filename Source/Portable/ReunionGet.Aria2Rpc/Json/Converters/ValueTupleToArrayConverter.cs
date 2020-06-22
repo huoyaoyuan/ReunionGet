@@ -3,7 +3,7 @@ using System.Reflection.Emit;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace ReunionGet.Aria2Rpc.Json
+namespace ReunionGet.Aria2Rpc.Json.Converters
 {
     public class ValueTupleToArrayConverter : JsonConverterFactory
     {
