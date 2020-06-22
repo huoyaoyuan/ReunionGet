@@ -8,7 +8,7 @@ using ReunionGet.Aria2Rpc.Json.Converters;
 
 namespace ReunionGet.Aria2Rpc
 {
-    public sealed class Aria2Connection : IDisposable
+    public sealed partial class Aria2Connection : IDisposable
     {
         private static readonly JsonSerializerOptions s_serializerOptions = new JsonSerializerOptions
         {
@@ -18,7 +18,8 @@ namespace ReunionGet.Aria2Rpc
                 new ValueTupleToArrayConverter(),
                 new BoolConverter(),
                 new JsonRpcParamsConverter()
-            }
+            },
+            IgnoreNullValues = true
         };
 
         private readonly HttpClient _httpClient;
@@ -48,6 +49,21 @@ namespace ReunionGet.Aria2Rpc
             var httpResponse = await _httpClient.PostAsJsonAsync("jsonrpc", rpcRequest, s_serializerOptions)
                 .ConfigureAwait(false);
             @params.Token = null;
+
+            var rpcResponse = await httpResponse.Content.ReadFromJsonAsync<RpcResponse<TResponse>>(s_serializerOptions)
+                .ConfigureAwait(false);
+
+            if (rpcRequest.Id != rpcResponse.Id)
+                throw new InvalidOperationException("Bad response id from remote.");
+
+            return rpcResponse.CheckSuccessfulResult();
+        }
+
+        public async Task<TResponse> DoRpcWithoutTokenAsync<TResponse>(string methodName)
+        {
+            var rpcRequest = new RpcRequest(_random.Next(), methodName, null);
+            var httpResponse = await _httpClient.PostAsJsonAsync("jsonrpc", rpcRequest, s_serializerOptions)
+                .ConfigureAwait(false);
 
             var rpcResponse = await httpResponse.Content.ReadFromJsonAsync<RpcResponse<TResponse>>(s_serializerOptions)
                 .ConfigureAwait(false);

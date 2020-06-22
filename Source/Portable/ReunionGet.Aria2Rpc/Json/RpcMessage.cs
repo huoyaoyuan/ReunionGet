@@ -15,9 +15,9 @@ namespace ReunionGet.Aria2Rpc.Json
 
         public string Method { get; }
 
-        public RpcParams Params { get; }
+        public RpcParams? Params { get; }
 
-        public RpcRequest(int id, string method, RpcParams @params)
+        public RpcRequest(int id, string method, RpcParams? @params)
         {
             Id = id;
             Method = method;
