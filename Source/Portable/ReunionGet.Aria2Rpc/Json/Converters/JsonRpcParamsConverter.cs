@@ -60,7 +60,10 @@ namespace ReunionGet.Aria2Rpc.Json.Converters
                 new[] { typeof(Utf8JsonWriter), typeof(RpcParams), typeof(JsonSerializerOptions) });
             var writeBuilder = writeMethod.GetILGenerator();
 
-            var jmpLabel = writeBuilder.DefineLabel();
+            var skipTokenLabel = writeBuilder.DefineLabel();
+            var endLabel = writeBuilder.DefineLabel();
+            var cleanStackLabel = writeBuilder.DefineLabel();
+
             var typedLocal = writeBuilder.DeclareLocal(valueType);
             var strLocal = writeBuilder.DeclareLocal(typeof(string));
 
@@ -75,13 +78,13 @@ namespace ReunionGet.Aria2Rpc.Json.Converters
             writeBuilder.EmitCall(OpCodes.Callvirt, RpcParams.TokenProperty.GetMethod!, null);
             writeBuilder.Emit(OpCodes.Stloc, strLocal);
             writeBuilder.Emit(OpCodes.Ldloc, strLocal);
-            writeBuilder.Emit(OpCodes.Brfalse_S, jmpLabel);
+            writeBuilder.Emit(OpCodes.Brfalse_S, skipTokenLabel);
 
             writeBuilder.Emit(OpCodes.Ldarg_0);
             writeBuilder.Emit(OpCodes.Ldloc, strLocal);
             writeBuilder.EmitCall(OpCodes.Callvirt, WriteStringValue, null);
 
-            writeBuilder.MarkLabel(jmpLabel);
+            writeBuilder.MarkLabel(skipTokenLabel);
             foreach (var p in properties)
             {
                 if (p == RpcParams.TokenProperty)
@@ -98,9 +101,31 @@ namespace ReunionGet.Aria2Rpc.Json.Converters
                 writeBuilder.Emit(OpCodes.Ldarg_0);
                 writeBuilder.Emit(OpCodes.Ldloc, typedLocal);
                 writeBuilder.EmitCall(OpCodes.Callvirt, p.GetMethod, null);
+
+                if (!p.PropertyType.IsValueType)
+                {
+                    writeBuilder.Emit(OpCodes.Dup);
+                    writeBuilder.Emit(OpCodes.Brfalse_S, cleanStackLabel);
+                }
+                else if (Nullable.GetUnderlyingType(p.PropertyType) is object)
+                {
+                    writeBuilder.Emit(OpCodes.Dup);
+                    var local = writeBuilder.DeclareLocal(p.PropertyType);
+                    writeBuilder.Emit(OpCodes.Stloc, local);
+                    writeBuilder.Emit(OpCodes.Ldloca, local);
+                    writeBuilder.EmitCall(OpCodes.Call, p.PropertyType.GetProperty(nameof(Nullable<int>.HasValue))!.GetMethod!, null);
+                    writeBuilder.Emit(OpCodes.Brfalse_S, cleanStackLabel);
+                }
+
                 writeBuilder.Emit(OpCodes.Ldarg_2);
                 writeBuilder.EmitCall(OpCodes.Callvirt, typeof(JsonConverter<>).MakeGenericType(p.PropertyType).GetMethod(nameof(JsonConverter<RpcParams>.Write))!, null);
             }
+            writeBuilder.Emit(OpCodes.Br_S, endLabel);
+            writeBuilder.MarkLabel(cleanStackLabel);
+            writeBuilder.Emit(OpCodes.Pop);
+            writeBuilder.Emit(OpCodes.Pop);
+            writeBuilder.Emit(OpCodes.Pop);
+            writeBuilder.MarkLabel(endLabel);
             writeBuilder.Emit(OpCodes.Ldarg_0);
             writeBuilder.EmitCall(OpCodes.Callvirt, WriteEndArray, null);
             writeBuilder.Emit(OpCodes.Ret);

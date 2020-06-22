@@ -11,7 +11,7 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
         {
             protected internal override string MethodName => "test.testMethod";
             public string? Param2 { get; set; }
-            public int Param1 { get; set; }
+            public int? Param1 { get; set; }
         }
 
         private static void TestSerialization<T>(T @params, string json)
@@ -54,7 +54,17 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
             {
                 Token = "token",
                 Param1 = 114514
-            }, "[\"token\",null,114514]");
+            }, "[\"token\"]");
+        }
+
+        [Fact]
+        public void TestParamNullableStruct()
+        {
+            TestSerialization(new TestParams
+            {
+                Token = "token",
+                Param2 = "abc"
+            }, "[\"token\",\"abc\"]");
         }
 
         [Fact]
