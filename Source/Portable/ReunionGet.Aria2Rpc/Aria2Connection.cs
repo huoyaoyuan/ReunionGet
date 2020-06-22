@@ -59,5 +59,11 @@ namespace ReunionGet.Aria2Rpc
 
         public Task<TResponse[]> BatchAsync<TResponse>(params JsonRpcParams<TResponse>[] @params)
             => DoRpcAsync(new RpcBatchParams<TResponse>(@params));
+
+        public Task<(T1, T2)> BatchAsync<T1, T2>(JsonRpcParams<T1> param1, JsonRpcParams<T2> param2)
+            => DoRpcAsync(new RpcBatchParams<T1, T2>(param1, param2));
+
+        public Task<(T1, T2, T3)> BatchAsync<T1, T2, T3>(JsonRpcParams<T1> param1, JsonRpcParams<T2> param2, JsonRpcParams<T3> param3)
+            => DoRpcAsync(new RpcBatchParams<T1, T2, T3>(param1, param2, param3));
     }
 }
