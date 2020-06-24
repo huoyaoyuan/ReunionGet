@@ -182,6 +182,9 @@ dotnet_diagnostic.CA1062.severity = none
 # CA1303: Do not pass literals as localized parameters
 dotnet_diagnostic.CA1303.severity = none
 
+# CA2000: Dispose object before exiting scope
+dotnet_diagnostic.CA2000.severity = none
+
 # CA5350: Do Not Use Weak Cryptographic Algorithms
 dotnet_diagnostic.CA5350.severity = none
 

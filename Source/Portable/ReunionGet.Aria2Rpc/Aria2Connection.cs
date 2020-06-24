@@ -60,24 +60,22 @@ namespace ReunionGet.Aria2Rpc
             _httpClient.Dispose();
         }
 
-        public Aria2Connection(Uri baseUri, string token, bool shutdownOnDisposal = true)
+        public Aria2Connection(Uri baseUri, string token, HttpMessageHandler? handler = null, bool shutdownOnDisposal = true)
         {
-            _httpClient = new HttpClient
-            {
-                BaseAddress = baseUri
-            };
+            _httpClient = handler is null ? new HttpClient() : new HttpClient(handler);
+            _httpClient.BaseAddress = baseUri;
             _tokenParam = "token:" + token;
             _shutdownOnDisposal = shutdownOnDisposal;
         }
 
-        public Aria2Connection(string address, int port, string token, bool shutdownOnDisposal = true)
-            : this(new Uri($"http://{address}:{port}"), token, shutdownOnDisposal)
+        public Aria2Connection(string address, int port, string token, HttpMessageHandler? handler = null, bool shutdownOnDisposal = true)
+            : this(new Uri($"http://{address}:{port}"), token, handler, shutdownOnDisposal)
         {
         }
 
         public async Task<TResponse> DoRpcAsync<TResponse>(RpcParams<TResponse> @params)
         {
-            if (_disposed || ShutDown)
+            if (ShutDown) // Let HttpClient throw ObjectDisposedException
                 throw new ObjectDisposedException(nameof(Aria2Connection),
                     "The connection has been disposed or shut down.");
 
@@ -101,7 +99,7 @@ namespace ReunionGet.Aria2Rpc
 
         public async Task<TResponse> DoRpcWithoutTokenAsync<TResponse>(string methodName)
         {
-            if (_disposed || ShutDown)
+            if (ShutDown) // Let HttpClient throw ObjectDisposedException
                 throw new ObjectDisposedException(nameof(Aria2Connection),
                     "The connection has been disposed or shut down.");
 
