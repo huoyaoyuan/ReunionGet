@@ -472,5 +472,54 @@ namespace ReunionGet.Aria2Rpc
         /// <returns>OK(<see langword="true"/>) if success.</returns>
         public Task<bool> ForceShutdownAsync()
             => DoRpcAsync(new ForceShutdownRequest());
+
+        /// <summary>
+        /// Saves current session into session file.
+        /// </summary>
+        /// <returns>OK(<see langword="true"/>) if success.</returns>
+        public Task<bool> SaveSessionAsync()
+            => DoRpcAsync(new SaveSessionRequest());
+
+        /// <summary>
+        /// Get options of the download denoted by <paramref name="gid"/>.
+        /// </summary>
+        /// <param name="gid">GID of the download.</param>
+        /// <returns>Options of the download.</returns>
+        public Task<Aria2Options> GetOptionAsync(long gid)
+            => DoRpcAsync(new GetOptionRequest
+            {
+                Gid = gid
+            });
+
+        /// <summary>
+        /// Change options of the download denoted by <paramref name="gid"/>.
+        /// </summary>
+        /// <param name="gid">GID of the download.</param>
+        /// <param name="options">Options to change.</param>
+        /// <returns>OK(<see langword="true"/>) if success.</returns>
+        public Task<bool> ChangeOptionAsync(long gid, Aria2Options options)
+            => DoRpcAsync(new ChangeOptionRequest
+            {
+                Gid = gid,
+                Options = options
+            });
+
+        /// <summary>
+        /// Get the global options.
+        /// </summary>
+        /// <returns>Global options.</returns>
+        public Task<Aria2Options> GetGlobalOptionAsync()
+            => DoRpcAsync(new GetGlobalOptionRequest());
+
+        /// <summary>
+        /// Change the global options.
+        /// </summary>
+        /// <param name="options">Options to change.</param>
+        /// <returns>OK(<see langword="true"/>) if success.</returns>
+        public Task<bool> ChangeGlobalOptionAsync(Aria2Options options)
+            => DoRpcAsync(new ChangeGlobalOptionRequest
+            {
+                Options = options
+            });
     }
 }
