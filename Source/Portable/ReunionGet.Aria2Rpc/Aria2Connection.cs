@@ -44,7 +44,18 @@ namespace ReunionGet.Aria2Rpc
             _disposed = true;
 
             if (_shutdownOnDisposal && !ShutDown)
-                _ = await ForceShutdownAsync().ConfigureAwait(false);
+            {
+                try
+                {
+                    _ = await ForceShutdownAsync().ConfigureAwait(false);
+                }
+#pragma warning disable CA1031 // Don't catch general exception type
+                catch
+#pragma warning restore CA1031 // Don't catch general exception type
+                {
+                    // Dispose should not throw
+                }
+            }
 
             _httpClient.Dispose();
         }
