@@ -30,9 +30,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReunionGet.TorrentInfo", "S
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Portable", "Portable", "{5291FA91-B55C-45B0-8247-76E9AEDAF360}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReunionGet.Aria2Rpc", "Source\Portable\ReunionGet.Aria2Rpc\ReunionGet.Aria2Rpc.csproj", "{946DF13B-2073-4F28-93F1-C4B67E8253E4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReunionGet.Aria2Rpc", "Source\Portable\ReunionGet.Aria2Rpc\ReunionGet.Aria2Rpc.csproj", "{946DF13B-2073-4F28-93F1-C4B67E8253E4}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReunionGet.Aria2Rpc.Tests", "Test\ReunionGet.Aria2Rpc.Tests\ReunionGet.Aria2Rpc.Tests.csproj", "{E4C28004-4B6B-49E4-9FD6-5FD5F432FF09}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReunionGet.Aria2Rpc.Tests", "Test\ReunionGet.Aria2Rpc.Tests\ReunionGet.Aria2Rpc.Tests.csproj", "{E4C28004-4B6B-49E4-9FD6-5FD5F432FF09}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReunionGet.Models", "Source\Portable\ReunionGet.Models\ReunionGet.Models.csproj", "{614970B8-CF2E-4A1E-BE43-7FE1C632B1BA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -60,6 +62,10 @@ Global
 		{E4C28004-4B6B-49E4-9FD6-5FD5F432FF09}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4C28004-4B6B-49E4-9FD6-5FD5F432FF09}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4C28004-4B6B-49E4-9FD6-5FD5F432FF09}.Release|Any CPU.Build.0 = Release|Any CPU
+		{614970B8-CF2E-4A1E-BE43-7FE1C632B1BA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{614970B8-CF2E-4A1E-BE43-7FE1C632B1BA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{614970B8-CF2E-4A1E-BE43-7FE1C632B1BA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{614970B8-CF2E-4A1E-BE43-7FE1C632B1BA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -71,6 +77,7 @@ Global
 		{5291FA91-B55C-45B0-8247-76E9AEDAF360} = {2549F604-BE33-41BC-808A-1BB4649A6011}
 		{946DF13B-2073-4F28-93F1-C4B67E8253E4} = {5291FA91-B55C-45B0-8247-76E9AEDAF360}
 		{E4C28004-4B6B-49E4-9FD6-5FD5F432FF09} = {385054D4-2D39-4F6D-A018-CE1D986D679A}
+		{614970B8-CF2E-4A1E-BE43-7FE1C632B1BA} = {5291FA91-B55C-45B0-8247-76E9AEDAF360}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {50D99955-3D39-4A91-A30C-8E2F7D084CD7}
