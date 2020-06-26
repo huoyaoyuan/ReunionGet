@@ -109,5 +109,72 @@ namespace ReunionGet.Models.Aria2
                 }
             }
         }
+
+        private async void RefreshAsync()
+        {
+            async Task<bool> InitialConnectionAsync(int retries, int interval)
+            {
+                while (retries-- > 0)
+                {
+                    try
+                    {
+                        var version = await Connection.GetVersionAsync().ConfigureAwait(false);
+                        return true;
+                    }
+                    catch (JsonRpcException) // RPC is configured wrong.
+                    {
+                        return false;
+                    }
+                    catch (WebException) // Maybe the process hasn't started
+                    {
+                    }
+
+                    await Task.Delay(interval).ConfigureAwait(false);
+                }
+
+                return false;
+            }
+
+            if (!await InitialConnectionAsync(10, 1000).ConfigureAwait(false))
+            {
+                Updated?.Invoke();
+                IsFaulted = true;
+                return;
+            }
+
+            while (true)
+            {
+                try
+                {
+                    _ = await Connection.TellActiveAsync().ConfigureAwait(false);
+                }
+                catch (TaskCanceledException)
+                {
+                    return;
+                }
+                catch (ObjectDisposedException)
+                {
+                    return;
+                }
+                catch (WebException)
+                {
+                    return;
+                }
+#pragma warning disable CA1031 // Don't catch general exception type
+                catch
+#pragma warning restore CA1031 // Don't catch general exception type
+                {
+                    // should log
+                    return;
+                }
+
+                Updated?.Invoke();
+                await Task.Delay(1000).ConfigureAwait(false);
+            }
+        }
+
+        public bool IsFaulted { get; private set; }
+
+        public event Action? Updated;
     }
 }
