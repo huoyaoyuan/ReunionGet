@@ -7,19 +7,6 @@
     <PackageOutputPath>$(MSBuildThisFileDirectory)PackageOutput\$(Configuration)</PackageOutputPath>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.csproj'">
-    <LangVersion>8.0</LangVersion>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(MSBuildProjectExtension)' == '.vbproj'">
-    <LangVersion>16</LangVersion>
-    <OptionExplicit>On</OptionExplicit>
-    <OptionInfer>On</OptionInfer>
-    <OptionStrict>On</OptionStrict>
-    <OptionCompare>Binary</OptionCompare>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.0.0" PrivateAssets="All" />
   </ItemGroup>
