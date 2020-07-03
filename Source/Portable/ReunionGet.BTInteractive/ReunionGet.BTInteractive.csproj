@@ -12,4 +12,10 @@
     <Version>0.1.0</Version>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ReunionGet.Aria2Rpc\ReunionGet.Aria2Rpc.csproj" />
+    <ProjectReference Include="..\ReunionGet.Models\ReunionGet.Models.csproj" />
+    <ProjectReference Include="..\ReunionGet.Parser\ReunionGet.Parser.csproj" />
+  </ItemGroup>
+
 </Project>

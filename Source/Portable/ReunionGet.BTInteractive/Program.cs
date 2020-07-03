@@ -1,12 +1,109 @@
 ﻿using System;
+using System.IO;
+using System.Threading.Tasks;
+using ReunionGet.Aria2Rpc.Json;
+using ReunionGet.Aria2Rpc.Json.Responses;
+using ReunionGet.Models.Aria2;
+using ReunionGet.Parser;
+
+#pragma warning disable CA2007 // Use ConfigureAwait
 
 namespace ReunionGet.BTInteractive
 {
     internal class Program
     {
-        public static void Main()
+        public static async Task Main()
         {
-            Console.WriteLine("Hello World!");
+            bool canceled = false;
+            Console.CancelKeyPress += (s, e) =>
+            {
+                canceled = true;
+                e.Cancel = true;
+            };
+
+            Console.Write("Aria2 path(use current path if empty):");
+            string? aria2 = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(aria2))
+                aria2 = "aria2c";
+
+            Console.Write("Storage path(use current working directory if empty):");
+            string? cwd = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(cwd))
+                cwd = ".";
+
+            Console.Write("Magnet or torrent path:");
+            string? magnetOrTorrent;
+            do
+                magnetOrTorrent = Console.ReadLine();
+            while (string.IsNullOrWhiteSpace(magnetOrTorrent));
+
+            try
+            {
+                int port = new Random().Next(6000, 7000);
+                await using var host = new Aria2Host(aria2, cwd, listeningPort: port);
+                var version = await host.Connection.GetVersionAsync();
+                Console.WriteLine($"aria2 started at port {port} with PID {host.ProcessId}");
+                Console.WriteLine($"aria2 version: {version.Version}");
+
+                Aria2GID gid;
+                if (magnetOrTorrent.StartsWith("magnet:", StringComparison.Ordinal))
+                {
+                    var magnet = new Magnet(magnetOrTorrent);
+                    Console.WriteLine($"SHA256 Hex hash: {magnet.HashValue}");
+                    Console.WriteLine($"Display name: {magnet.DisplayName}");
+
+                    gid = await host.Connection.AddUriAsync(magnetOrTorrent);
+                }
+                else
+                {
+                    using var torrentFile = File.OpenRead(magnetOrTorrent);
+                    byte[] bytes = new byte[torrentFile.Length];
+                    var torrent = new BitTorrent(bytes);
+                    Console.WriteLine($"Display name: {torrent.Name}");
+                    Console.WriteLine($"Info hash: {torrent.InfoHash}");
+
+                    gid = await host.Connection.AddTorrentAsync(bytes);
+                }
+
+                while (true)
+                {
+                    if (canceled)
+                        return;
+
+                    var progress = await host.Connection.TellStatusAsync(gid);
+
+                    Console.WriteLine($"Status: {progress.Status}");
+                    Console.WriteLine($"Download: {progress.DownloadSpeed:N0} B/s Upload: {progress.UploadSpeed:N0} B/s");
+                    Console.WriteLine("Files:");
+                    foreach (var file in progress.Files!)
+                    {
+                        Console.Write($"{file.CompletedLength:N0}B/{file.Length:N0}B\t\t");
+                        Console.ForegroundColor = ConsoleColor.DarkCyan;
+                        Console.WriteLine(file.Path);
+                        Console.ResetColor();
+                    }
+
+                    if (progress.Status == DownloadStatus.Complete)
+                    {
+                        Console.WriteLine($"Download {gid} completed.");
+
+                        if (progress.FollowedBy?.Count > 0)
+                            gid = progress.FollowedBy[0];
+                        else
+                            return;
+                    }
+
+                    await Task.Delay(2000);
+                }
+            }
+#pragma warning disable CA1031 // Don't catch general exception type
+            catch (Exception ex)
+#pragma warning restore CA1031 // Don't catch general exception type
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(ex);
+                Console.ResetColor();
+            }
         }
     }
 }
