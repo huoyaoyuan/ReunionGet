@@ -4,14 +4,14 @@
     {
         protected internal override string MethodName => "aria2.getOption";
 
-        public long Gid { get; set; }
+        public Aria2GID Gid { get; set; }
     }
 
     public sealed class ChangeOptionRequest : RpcParams<bool>
     {
         protected internal override string MethodName => "aria2.changeOption";
 
-        public long Gid { get; set; }
+        public Aria2GID Gid { get; set; }
 
         public Aria2Options Options { get; set; } = new Aria2Options();
     }

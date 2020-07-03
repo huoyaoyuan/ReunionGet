@@ -10,7 +10,7 @@ namespace ReunionGet.Aria2Rpc.Json.Requests
     {
         protected internal override string MethodName => "aria2.changePosition";
 
-        public long Gid { get; set; }
+        public Aria2GID Gid { get; set; }
 
         public int Pos { get; set; }
 

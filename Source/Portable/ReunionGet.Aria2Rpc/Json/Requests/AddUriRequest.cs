@@ -1,6 +1,6 @@
 ﻿namespace ReunionGet.Aria2Rpc.Json.Requests
 {
-    public sealed class AddUriRequest : RpcParams<long>
+    public sealed class AddUriRequest : RpcParams<Aria2GID>
     {
         protected internal override string MethodName => "aria2.addUri";
 

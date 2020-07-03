@@ -4,7 +4,7 @@
     {
         protected internal override string MethodName => "aria2.removeDownloadResult";
 
-        public long Gid { get; set; }
+        public Aria2GID Gid { get; set; }
     }
 
     public sealed class PurgeDownloadRequest : RpcParams<bool>

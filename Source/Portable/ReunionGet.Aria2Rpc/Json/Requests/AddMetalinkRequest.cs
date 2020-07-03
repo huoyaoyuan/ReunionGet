@@ -4,7 +4,7 @@ using ReunionGet.Aria2Rpc.Json.Converters;
 
 namespace ReunionGet.Aria2Rpc.Json.Requests
 {
-    public sealed class AddMetalinkRequest : RpcParams<long[]>
+    public sealed class AddMetalinkRequest : RpcParams<Aria2GID[]>
     {
         protected internal override string MethodName => "aria2.addMetalink";
 

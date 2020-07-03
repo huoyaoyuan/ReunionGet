@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading.Tasks;
+using ReunionGet.Aria2Rpc.Json;
 using ReunionGet.Aria2Rpc.Json.Requests;
 using ReunionGet.Aria2Rpc.Json.Responses;
 
@@ -25,7 +26,7 @@ namespace ReunionGet.Aria2Rpc
         /// </summary>
         /// <param name="uris">An array of HTTP/FTP/SFTP/BitTorrent URIs (strings) pointing to the same resource.</param>
         /// <returns>The GID of the newly registered download.</returns>
-        public Task<long> AddUriAsync(params string[] uris) => AddUriAsync(uris, null, null);
+        public Task<Aria2GID> AddUriAsync(params string[] uris) => AddUriAsync(uris, null, null);
 
         /// <summary>
         /// Adds a new download.
@@ -38,7 +39,7 @@ namespace ReunionGet.Aria2Rpc
         /// <param name="options">Optional aria2 options.</param>
         /// <param name="position">The new download will be inserted at position in the waiting queue.</param>
         /// <returns>The GID of the newly registered download.</returns>
-        public Task<long> AddUriAsync(string[] uris, Aria2Options? options = null, int? position = null)
+        public Task<Aria2GID> AddUriAsync(string[] uris, Aria2Options? options = null, int? position = null)
         {
             if (position < 0)
                 throw new ArgumentOutOfRangeException(nameof(position), "Position must be non-negative.");
@@ -77,7 +78,7 @@ namespace ReunionGet.Aria2Rpc
         /// <param name="options">Optional aria2 options.</param>
         /// <param name="position">The new download will be inserted at position in the waiting queue.</param>
         /// <returns>The GID of the newly registered download.</returns>
-        public Task<long> AddTorrentAsync(ReadOnlyMemory<byte> torrent, string[]? uris = null, Aria2Options? options = null, int? position = null)
+        public Task<Aria2GID> AddTorrentAsync(ReadOnlyMemory<byte> torrent, string[]? uris = null, Aria2Options? options = null, int? position = null)
         {
             if (position < 0)
                 throw new ArgumentOutOfRangeException(nameof(position), "Position must be non-negative.");
@@ -113,7 +114,7 @@ namespace ReunionGet.Aria2Rpc
         /// <param name="options">Optional aria2 options.</param>
         /// <param name="position">The new download will be inserted at position in the waiting queue.</param>
         /// <returns>The GID of the newly registered download.</returns>
-        public async Task<long> AddTorrentAsync(Stream torrent, string[]? uris = null, Aria2Options? options = null, int? position = null)
+        public async Task<Aria2GID> AddTorrentAsync(Stream torrent, string[]? uris = null, Aria2Options? options = null, int? position = null)
             => await AddTorrentAsync(await ReadToEndAsync(torrent).ConfigureAwait(false), uris, options, position)
             .ConfigureAwait(false);
 
@@ -124,7 +125,7 @@ namespace ReunionGet.Aria2Rpc
         /// <param name="options">Optional aria2 options.</param>
         /// <param name="position">The new download will be inserted at position in the waiting queue.</param>
         /// <returns>An array GIDs of the newly registered downloads.</returns>
-        public Task<long[]> AddMetalinkAsync(ReadOnlyMemory<byte> metalink, Aria2Options? options = null, int? position = null)
+        public Task<Aria2GID[]> AddMetalinkAsync(ReadOnlyMemory<byte> metalink, Aria2Options? options = null, int? position = null)
         {
             if (position < 0)
                 throw new ArgumentOutOfRangeException(nameof(position), "Position must be non-negative.");
@@ -147,7 +148,7 @@ namespace ReunionGet.Aria2Rpc
         /// <param name="options">Optional aria2 options.</param>
         /// <param name="position">The new download will be inserted at position in the waiting queue.</param>
         /// <returns>An array GIDs of the newly registered downloads.</returns>
-        public async Task<long[]> AddMetalinkAsync(Stream metalink, Aria2Options? options = null, int? position = null)
+        public async Task<Aria2GID[]> AddMetalinkAsync(Stream metalink, Aria2Options? options = null, int? position = null)
             => await AddMetalinkAsync(await ReadToEndAsync(metalink).ConfigureAwait(false), options, position)
             .ConfigureAwait(false);
 
@@ -160,7 +161,7 @@ namespace ReunionGet.Aria2Rpc
         /// </remarks>
         /// <param name="gid">The gid of download to remove.</param>
         /// <returns>GID of removed download.</returns>
-        public Task<long> RemoveAsync(long gid)
+        public Task<Aria2GID> RemoveAsync(Aria2GID gid)
             => DoRpcAsync(new RemoveRequest
             {
                 Gid = gid
@@ -170,13 +171,13 @@ namespace ReunionGet.Aria2Rpc
         /// Force removes the download denoted by <paramref name="gid"/>.
         /// </summary>
         /// <remarks>
-        /// This method behaves just like <see cref="RemoveAsync(long)"/>
+        /// This method behaves just like <see cref="RemoveAsync(Aria2GID)"/>
         /// except that this method removes the download without performing any actions which take time.
         /// </remarks>
         /// <param name="gid">The gid of download to remove.</param>
         /// <returns>GID of removed download.</returns>
-        /// <seealso cref="RemoveAsync(long)"/>
-        public Task<long> ForceRemoveAsync(long gid)
+        /// <seealso cref="RemoveAsync(Aria2GID)"/>
+        public Task<Aria2GID> ForceRemoveAsync(Aria2GID gid)
             => DoRpcAsync(new ForceRemoveRequest
             {
                 Gid = gid
@@ -189,11 +190,11 @@ namespace ReunionGet.Aria2Rpc
         /// The status of paused download becomes <see cref="DownloadStatus.Paused"/>.
         /// If the download was active, the download is placed in the front of waiting queue.
         /// While the status is <see cref="DownloadStatus.Paused"/>, the download is not started.
-        /// To change status to <see cref="DownloadStatus.Waiting"/>, use the <see cref="UnpauseAsync(long)"/> method.
+        /// To change status to <see cref="DownloadStatus.Waiting"/>, use the <see cref="UnpauseAsync(Aria2GID)"/> method.
         /// </remarks>
         /// <param name="gid">The gid of download to pause.</param>
         /// <returns>GID of paused download.</returns>
-        public Task<long> PauseAsync(long gid)
+        public Task<Aria2GID> PauseAsync(Aria2GID gid)
             => DoRpcAsync(new PauseRequest
             {
                 Gid = gid
@@ -210,13 +211,13 @@ namespace ReunionGet.Aria2Rpc
         /// Force pauses the download denoted by <paramref name="gid"/>.
         /// </summary>
         /// <remarks>
-        /// This method behaves just like <see cref="PauseAsync(long)"/>
+        /// This method behaves just like <see cref="PauseAsync(Aria2GID)"/>
         /// except that this method pauses the download without performing any actions which take time.
         /// </remarks>
         /// <param name="gid">The gid of download to pause.</param>
         /// <returns>GID of paused download.</returns>
-        /// <seealso cref="PauseAsync(long)"/>
-        public Task<long> ForcePauseAsync(long gid)
+        /// <seealso cref="PauseAsync(Aria2GID)"/>
+        public Task<Aria2GID> ForcePauseAsync(Aria2GID gid)
             => DoRpcAsync(new ForcePauseRequest
             {
                 Gid = gid
@@ -244,7 +245,7 @@ namespace ReunionGet.Aria2Rpc
         /// </remarks>
         /// <param name="gid">The gid of download to unpause.</param>
         /// <returns>GID of unpaused download.</returns>
-        public Task<long> UnpauseAsync(long gid)
+        public Task<Aria2GID> UnpauseAsync(Aria2GID gid)
             => DoRpcAsync(new UnpauseRequest
             {
                 Gid = gid
@@ -264,7 +265,7 @@ namespace ReunionGet.Aria2Rpc
         /// <param name="keys">Limits keys of information to query.
         /// If null or empty, the response will contain all keys.</param>
         /// <returns>The status of queried download.</returns>
-        public Task<DownloadProgressStatus> TellStatusAsync(long gid, string[]? keys = null)
+        public Task<DownloadProgressStatus> TellStatusAsync(Aria2GID gid, string[]? keys = null)
             => DoRpcAsync(new TellStatusRequest
             {
                 Gid = gid,
@@ -276,7 +277,7 @@ namespace ReunionGet.Aria2Rpc
         /// </summary>
         /// <param name="gid">The GID of the download.</param>
         /// <returns>Uris used by the download. Corresponding to uris in <see cref="AddUriAsync(string[])"/>.</returns>
-        public Task<FileDownloadUriInfo[]> GetUrisAsync(long gid)
+        public Task<FileDownloadUriInfo[]> GetUrisAsync(Aria2GID gid)
             => DoRpcAsync(new GetUrisRequest
             {
                 Gid = gid
@@ -287,7 +288,7 @@ namespace ReunionGet.Aria2Rpc
         /// </summary>
         /// <param name="gid">The GID of the download.</param>
         /// <returns>Files and status in the download.</returns>
-        public Task<DownloadFileStatus[]> GetFilesAsync(long gid)
+        public Task<DownloadFileStatus[]> GetFilesAsync(Aria2GID gid)
             => DoRpcAsync(new GetFilesRequest
             {
                 Gid = gid
@@ -301,7 +302,7 @@ namespace ReunionGet.Aria2Rpc
         /// </remarks>
         /// <param name="gid">The GID of the download.</param>
         /// <returns>Peers of the download.</returns>
-        public Task<PeerInfo[]> GetPeersAsync(long gid)
+        public Task<PeerInfo[]> GetPeersAsync(Aria2GID gid)
             => DoRpcAsync(new GetPeersRequest
             {
                 Gid = gid
@@ -312,7 +313,7 @@ namespace ReunionGet.Aria2Rpc
         /// </summary>
         /// <param name="gid">The GID of the download.</param>
         /// <returns>Connected servers of the download.</returns>
-        public Task<DownloadServerInfoOfFile[]> GetServersAsync(long gid)
+        public Task<DownloadServerInfoOfFile[]> GetServersAsync(Aria2GID gid)
             => DoRpcAsync(new GetServersRequest
             {
                 Gid = gid
@@ -324,7 +325,7 @@ namespace ReunionGet.Aria2Rpc
         /// <param name="keys">Limits keys of information to query.
         /// If null or empty, the response will contain all keys.</param>
         /// <returns>Progress of all active downloads.</returns>
-        /// <seealso cref="TellStatusAsync(long, string[]?)"/>
+        /// <seealso cref="TellStatusAsync(Aria2GID, string[]?)"/>
         public Task<DownloadProgressStatus[]> TellActiveAsync(string[]? keys = null)
             => DoRpcAsync(new TellActiveRequest
             {
@@ -343,7 +344,7 @@ namespace ReunionGet.Aria2Rpc
         /// <param name="keys">Limits keys of information to query.
         /// If null or empty, the response will contain all keys.</param>
         /// <returns>Progress of paused downloads in the range.</returns>
-        /// <seealso cref="TellStatusAsync(long, string[]?)"/>
+        /// <seealso cref="TellStatusAsync(Aria2GID, string[]?)"/>
         public Task<DownloadProgressStatus[]> TellWaitingAsync(int offset, int num, string[]? keys = null)
         {
             if (num < 0)
@@ -369,7 +370,7 @@ namespace ReunionGet.Aria2Rpc
         /// <param name="keys">Limits keys of information to query.
         /// If null or empty, the response will contain all keys.</param>
         /// <returns>Progress of stopped downloads in the range.</returns>
-        /// <seealso cref="TellStatusAsync(long, string[]?)"/>
+        /// <seealso cref="TellStatusAsync(Aria2GID, string[]?)"/>
         public Task<DownloadProgressStatus[]> TellStoppedAsync(int offset, int num, string[]? keys = null)
         {
             if (num < 0)
@@ -390,7 +391,7 @@ namespace ReunionGet.Aria2Rpc
         /// <param name="pos">The relative position to change.</param>
         /// <param name="how">The origin of the move.</param>
         /// <returns>The resulting position.</returns>
-        public Task<int> ChangePositionAsync(long gid, int pos, ChangePositionOrigin how)
+        public Task<int> ChangePositionAsync(Aria2GID gid, int pos, ChangePositionOrigin how)
             => DoRpcAsync(new ChangePositionRequest
             {
                 Gid = gid,
@@ -412,7 +413,7 @@ namespace ReunionGet.Aria2Rpc
         /// If <see langword="null"/>, appended at the end.</param>
         /// <returns></returns>
         public Task<(int numDeleted, int numAdded)> ChangeUriAsync(
-            long gid, int fileIndex = 0,
+            Aria2GID gid, int fileIndex = 0,
             string[]? delUris = null, string[]? addUris = null,
             int? position = null)
             => DoRpcAsync(new ChangeUriRequest
@@ -443,7 +444,7 @@ namespace ReunionGet.Aria2Rpc
         /// </summary>
         /// <param name="gid">The GID of download to remove.</param>
         /// <returns>OK(<see langword="true"/>) if success.</returns>
-        public Task<bool> RemoveDownloadResultAsync(long gid)
+        public Task<bool> RemoveDownloadResultAsync(Aria2GID gid)
             => DoRpcAsync(new RemoveDownloadRequest
             {
                 Gid = gid
@@ -485,7 +486,7 @@ namespace ReunionGet.Aria2Rpc
         /// </summary>
         /// <param name="gid">GID of the download.</param>
         /// <returns>Options of the download.</returns>
-        public Task<Aria2Options> GetOptionAsync(long gid)
+        public Task<Aria2Options> GetOptionAsync(Aria2GID gid)
             => DoRpcAsync(new GetOptionRequest
             {
                 Gid = gid
@@ -497,7 +498,7 @@ namespace ReunionGet.Aria2Rpc
         /// <param name="gid">GID of the download.</param>
         /// <param name="options">Options to change.</param>
         /// <returns>OK(<see langword="true"/>) if success.</returns>
-        public Task<bool> ChangeOptionAsync(long gid, Aria2Options options)
+        public Task<bool> ChangeOptionAsync(Aria2GID gid, Aria2Options options)
             => DoRpcAsync(new ChangeOptionRequest
             {
                 Gid = gid,

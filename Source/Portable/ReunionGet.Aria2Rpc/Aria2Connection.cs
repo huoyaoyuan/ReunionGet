@@ -19,7 +19,8 @@ namespace ReunionGet.Aria2Rpc
                 new BoolConverter(),
                 new JsonRpcParamsConverter(),
                 new QuotedIntConverter(),
-                new QuotedLongConverter()
+                new QuotedLongConverter(),
+                new Aria2GIDConverter()
             },
             IgnoreNullValues = true
         };

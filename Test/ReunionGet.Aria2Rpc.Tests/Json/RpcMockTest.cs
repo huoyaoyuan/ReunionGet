@@ -105,7 +105,7 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
                     new [] { "http://localhost" },
                     new { },
                     "3"
-                }, "1145141919810"),
+                }, "1a2b3c4d5e"),
                 ("aria2.forceShutdown",
                 new[] { "token:abc" },
                 "OK"));
@@ -113,7 +113,7 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
             await using (var connection = new Aria2Connection("localhost", 1000, "abc", handler))
             {
                 long gid = await connection.AddUriAsync(new[] { "http://localhost" }, position: 3).ConfigureAwait(false);
-                Assert.Equal(1145141919810, gid);
+                Assert.Equal(0x1a2b3c4d5e, gid);
             }
 
             Assert.Equal(new[]
@@ -131,7 +131,7 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
                 await using (var connection = new Aria2Connection("localhost", 1000, "abc", new MockHandler()))
                 {
                     long gid = await connection.AddUriAsync(new[] { "http://localhost" }, position: 3).ConfigureAwait(false);
-                    Assert.Equal(1145141919810, gid);
+                    Assert.Equal(0x1a2b3c4d5e, gid);
                 }
             }).ConfigureAwait(false);
 

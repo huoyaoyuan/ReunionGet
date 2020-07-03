@@ -6,7 +6,7 @@ namespace ReunionGet.Aria2Rpc.Json.Requests
     {
         protected internal override string MethodName => "aria2.tellStatus";
 
-        public long Gid { get; set; }
+        public Aria2GID Gid { get; set; }
 
         public string[]? Keys { get; set; }
     }
@@ -15,14 +15,14 @@ namespace ReunionGet.Aria2Rpc.Json.Requests
     {
         protected internal override string MethodName => "aria2.getUris";
 
-        public long Gid { get; set; }
+        public Aria2GID Gid { get; set; }
     }
 
     public sealed class GetFilesRequest : RpcParams<DownloadFileStatus[]>
     {
         protected internal override string MethodName => "aria2.getFiles";
 
-        public long Gid { get; set; }
+        public Aria2GID Gid { get; set; }
     }
 
     public sealed class TellActiveRequest : RpcParams<DownloadProgressStatus[]>

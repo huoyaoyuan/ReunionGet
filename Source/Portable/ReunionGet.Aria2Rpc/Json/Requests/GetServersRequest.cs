@@ -6,6 +6,6 @@ namespace ReunionGet.Aria2Rpc.Json.Requests
     {
         protected internal override string MethodName => "aria2.getServers";
 
-        public long Gid { get; set; }
+        public Aria2GID Gid { get; set; }
     }
 }

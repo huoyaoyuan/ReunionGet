@@ -13,10 +13,10 @@ namespace ReunionGet.Aria2Rpc.Json.Responses
     {
         [JsonConstructor]
         public DownloadProgressStatus(
-            long gid, DownloadStatus status, long totalLength, long completedLength, long uploadedLength,
+            Aria2GID gid, DownloadStatus status, long totalLength, long completedLength, long uploadedLength,
             BitArray? bitfield, int downloadSpeed, int uploadSpeed, string? infoHash, int numSeeders, bool seeder,
             long pieceLength, int numPieces, int connections, int errorCode, string? errorMessage,
-            IReadOnlyList<long>? followedBy, long? following, long? belongsTo, string? dir,
+            IReadOnlyList<Aria2GID>? followedBy, Aria2GID? following, Aria2GID? belongsTo, string? dir,
             IReadOnlyList<DownloadFileStatus>? files, BitTorrentDownloadInfo? bitTorrent, long? verifiedLength,
             bool verifyIntegrityPending)
         {
@@ -46,7 +46,7 @@ namespace ReunionGet.Aria2Rpc.Json.Responses
             VerifyIntegrityPending = verifyIntegrityPending;
         }
 
-        public long Gid { get; }
+        public Aria2GID Gid { get; }
 
         public DownloadStatus Status { get; }
 
@@ -103,13 +103,13 @@ namespace ReunionGet.Aria2Rpc.Json.Responses
         /// This value is useful to track auto-generated downloads.
         /// If there are no such downloads, this key will not be included in the response.
         /// </remarks>
-        public IReadOnlyList<long>? FollowedBy { get; }
+        public IReadOnlyList<Aria2GID>? FollowedBy { get; }
 
         /// <summary>
         /// The reverse link for <see cref="FollowedBy"/>.
         /// A download included in <see cref="FollowedBy"/> has this object's GID in its <see cref="Following"/> value.
         /// </summary>
-        public long? Following { get; }
+        public Aria2GID? Following { get; }
 
         /// <summary>
         /// GID of a parent download.
@@ -119,7 +119,7 @@ namespace ReunionGet.Aria2Rpc.Json.Responses
         /// For example, if a file in a Metalink has BitTorrent resources, the downloads of ".torrent" files are parts of that parent.
         /// If this download has no parent, this key will not be included in the response.
         /// </remarks>
-        public long? BelongsTo { get; }
+        public Aria2GID? BelongsTo { get; }
 
         public string? Dir { get; }
 
