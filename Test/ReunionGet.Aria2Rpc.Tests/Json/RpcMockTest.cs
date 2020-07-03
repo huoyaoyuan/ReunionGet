@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading;
@@ -43,11 +44,15 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
 
         public List<string> Requested { get; } = new List<string>();
 
+        private readonly MediaTypeHeaderValue _mediaType = new MediaTypeHeaderValue("application/json-rpc");
+
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Assert.Equal(HttpMethod.Post, request.Method);
             Assert.Equal("/jsonrpc", request.RequestUri!.LocalPath);
             Assert.Equal("application/json", request.Content!.Headers.ContentType!.MediaType);
+
+            Assert.NotNull(request.Content!.Headers.ContentLength); // aira2 quirk: content length must be set
 
             var requestObj = await request.Content.ReadFromJsonAsync<RequestObjectTemplate>().ConfigureAwait(false);
             Assert.Equal("2.0", requestObj.jsonrpc);
@@ -66,7 +71,7 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
                             jsonrpc = "2.0",
                             id = requestObj.id,
                             result = rsp
-                        })
+                        }, mediaType: _mediaType)
                     };
                 }
             }
@@ -82,7 +87,7 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
                         code = -1,
                         message = "error"
                     }
-                })
+                }, mediaType: _mediaType)
             };
         }
     }

@@ -73,6 +73,20 @@ namespace ReunionGet.Aria2Rpc
         {
         }
 
+        private async Task<TResponse> PostAsync<TRequest, TResponse>(TRequest request)
+        {
+            var requestContent = JsonContent.Create(request, options: s_serializerOptions);
+            // aria2 can't parse chunked request body.
+            // Manually load content into buffer to send with Content-Length.
+            await requestContent.LoadIntoBufferAsync().ConfigureAwait(false);
+            var httpResponse = await _httpClient.PostAsync("jsonrpc", requestContent).ConfigureAwait(false);
+
+            // HttpContentJsonExtensions.ReadFromJsonAsync rejects the media type 'application/json-rpc'
+            var responseStream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            return await JsonSerializer.DeserializeAsync<TResponse>(responseStream, s_serializerOptions)
+                .ConfigureAwait(false);
+        }
+
         public async Task<TResponse> DoRpcAsync<TResponse>(RpcParams<TResponse> @params)
         {
             if (ShutDown) // Let HttpClient throw ObjectDisposedException
@@ -81,12 +95,9 @@ namespace ReunionGet.Aria2Rpc
 
             @params.Token = _tokenParam;
             var rpcRequest = new RpcRequest(_random.Next(), @params.MethodName, @params);
-            var httpResponse = await _httpClient.PostAsJsonAsync("jsonrpc", rpcRequest, s_serializerOptions)
+            var rpcResponse = await PostAsync<RpcRequest, RpcResponse<TResponse>>(rpcRequest)
                 .ConfigureAwait(false);
             @params.Token = null;
-
-            var rpcResponse = await httpResponse.Content.ReadFromJsonAsync<RpcResponse<TResponse>>(s_serializerOptions)
-                .ConfigureAwait(false);
 
             if (rpcRequest.Id != rpcResponse.Id)
                 throw new InvalidOperationException("Bad response id from remote.");
@@ -104,10 +115,7 @@ namespace ReunionGet.Aria2Rpc
                     "The connection has been disposed or shut down.");
 
             var rpcRequest = new RpcRequest(_random.Next(), methodName, null);
-            var httpResponse = await _httpClient.PostAsJsonAsync("jsonrpc", rpcRequest, s_serializerOptions)
-                .ConfigureAwait(false);
-
-            var rpcResponse = await httpResponse.Content.ReadFromJsonAsync<RpcResponse<TResponse>>(s_serializerOptions)
+            var rpcResponse = await PostAsync<RpcRequest, RpcResponse<TResponse>>(rpcRequest)
                 .ConfigureAwait(false);
 
             if (rpcRequest.Id != rpcResponse.Id)

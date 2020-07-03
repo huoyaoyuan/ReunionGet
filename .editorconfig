@@ -185,6 +185,9 @@ dotnet_diagnostic.CA1303.severity = none
 # CA2000: Dispose object before exiting scope
 dotnet_diagnostic.CA2000.severity = none
 
+# CA2234: Pass System.Uri object instead of string
+dotnet_diagnostic.CA2234.severity = none
+
 # CA5350: Do Not Use Weak Cryptographic Algorithms
 dotnet_diagnostic.CA5350.severity = none
 
