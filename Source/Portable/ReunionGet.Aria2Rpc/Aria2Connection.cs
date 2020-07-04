@@ -76,14 +76,14 @@ namespace ReunionGet.Aria2Rpc
 
         private async Task<TResponse> PostAsync<TRequest, TResponse>(TRequest request)
         {
-            var requestContent = JsonContent.Create(request, options: s_serializerOptions);
+            using var requestContent = JsonContent.Create(request, options: s_serializerOptions);
             // aria2 can't parse chunked request body.
             // Manually load content into buffer to send with Content-Length.
             await requestContent.LoadIntoBufferAsync().ConfigureAwait(false);
-            var httpResponse = await _httpClient.PostAsync("jsonrpc", requestContent).ConfigureAwait(false);
+            using var httpResponse = await _httpClient.PostAsync("jsonrpc", requestContent).ConfigureAwait(false);
 
             // HttpContentJsonExtensions.ReadFromJsonAsync rejects the media type 'application/json-rpc'
-            var responseStream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            using var responseStream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
             return await JsonSerializer.DeserializeAsync<TResponse>(responseStream, s_serializerOptions)
                 .ConfigureAwait(false);
         }

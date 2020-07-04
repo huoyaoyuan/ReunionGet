@@ -183,7 +183,7 @@ dotnet_diagnostic.CA1062.severity = none
 dotnet_diagnostic.CA1303.severity = none
 
 # CA2000: Dispose object before exiting scope
-dotnet_diagnostic.CA2000.severity = none
+dotnet_diagnostic.CA2000.severity = silent
 
 # CA2225: operator overload should have named alternative
 dotnet_diagnostic.CA2225.severity = none
