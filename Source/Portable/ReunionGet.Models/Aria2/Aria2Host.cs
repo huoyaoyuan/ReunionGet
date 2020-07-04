@@ -48,7 +48,9 @@ namespace ReunionGet.Models.Aria2
                 {
                     "--enable-rpc=true",
                     $"--rpc-listen-port={listeningPort}",
-                    $"--rpc-secret={token}"
+                    $"--rpc-secret={token}",
+                    "--bt-save-metadata=true",
+                    "-d ."
                 }
             };
 
