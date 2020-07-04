@@ -36,7 +36,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReunionGet.Aria2Rpc.Tests",
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReunionGet.Models", "Source\Portable\ReunionGet.Models\ReunionGet.Models.csproj", "{614970B8-CF2E-4A1E-BE43-7FE1C632B1BA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReunionGet.BTInteractive", "Source\Portable\ReunionGet.BTInteractive\ReunionGet.BTInteractive.csproj", "{61B3A098-1E1C-4E56-8EED-5F09C7077E50}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReunionGet.BTInteractive", "Source\Portable\ReunionGet.BTInteractive\ReunionGet.BTInteractive.csproj", "{61B3A098-1E1C-4E56-8EED-5F09C7077E50}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{A41C2FA4-C74B-4582-9B3B-788E036A7EF3}"
+	ProjectSection(SolutionItems) = preProject
+		Scripts\Install-Tools.ps1 = Scripts\Install-Tools.ps1
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
