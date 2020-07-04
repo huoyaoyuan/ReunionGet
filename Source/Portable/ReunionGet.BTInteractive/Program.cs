@@ -69,6 +69,8 @@ namespace ReunionGet.BTInteractive
                 {
                     using var torrentFile = File.OpenRead(target);
                     byte[] bytes = new byte[torrentFile.Length];
+                    _ = await torrentFile.ReadAsync(bytes);
+
                     var torrent = new BitTorrent(bytes);
                     Console.WriteLine($"Display name: {torrent.Name}");
                     Console.WriteLine($"Info hash: {torrent.InfoHash}");
