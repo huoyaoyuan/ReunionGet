@@ -12,7 +12,7 @@ namespace ReunionGet.BTInteractive
 {
     internal class Program
     {
-        public static async Task Main()
+        public static async Task Main(string? aria2Path, string? target)
         {
             bool canceled = false;
             Console.CancelKeyPress += (s, e) =>
@@ -21,42 +21,53 @@ namespace ReunionGet.BTInteractive
                 e.Cancel = true;
             };
 
-            Console.Write("Aria2 path(use current path if empty):");
-            string? aria2 = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(aria2))
-                aria2 = "aria2c";
+            string? cwd = null;
 
-            Console.Write("Storage path(use current working directory if empty):");
-            string? cwd = Console.ReadLine();
+            if (aria2Path is null && target is null)
+            {
+                Console.Write("Storage path(use current working directory if empty):");
+                cwd = Console.ReadLine();
+            }
+
             if (string.IsNullOrWhiteSpace(cwd))
                 cwd = ".";
 
-            Console.Write("Magnet or torrent path:");
-            string? magnetOrTorrent;
-            do
-                magnetOrTorrent = Console.ReadLine();
-            while (string.IsNullOrWhiteSpace(magnetOrTorrent));
+            if (aria2Path is null)
+            {
+                Console.Write("Aria2 path(use current path if empty):");
+                aria2Path = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(aria2Path))
+                    aria2Path = "aria2c";
+            }
+
+            if (target is null)
+            {
+                Console.Write("Magnet or torrent path:");
+                do
+                    target = Console.ReadLine();
+                while (string.IsNullOrWhiteSpace(target));
+            }
 
             try
             {
                 int port = new Random().Next(6000, 7000);
-                await using var host = new Aria2Host(aria2, cwd, listeningPort: port);
+                await using var host = new Aria2Host(aria2Path, cwd, listeningPort: port);
                 var version = await host.Connection.GetVersionAsync();
                 Console.WriteLine($"aria2 started at port {port} with PID {host.ProcessId}");
                 Console.WriteLine($"aria2 version: {version.Version}");
 
                 Aria2GID gid;
-                if (magnetOrTorrent.StartsWith("magnet:", StringComparison.Ordinal))
+                if (target.StartsWith("magnet:", StringComparison.Ordinal))
                 {
-                    var magnet = new Magnet(magnetOrTorrent);
+                    var magnet = new Magnet(target);
                     Console.WriteLine($"SHA256 Hex hash: {magnet.HashValue}");
                     Console.WriteLine($"Display name: {magnet.DisplayName}");
 
-                    gid = await host.Connection.AddUriAsync(magnetOrTorrent);
+                    gid = await host.Connection.AddUriAsync(target);
                 }
                 else
                 {
-                    using var torrentFile = File.OpenRead(magnetOrTorrent);
+                    using var torrentFile = File.OpenRead(target);
                     byte[] bytes = new byte[torrentFile.Length];
                     var torrent = new BitTorrent(bytes);
                     Console.WriteLine($"Display name: {torrent.Name}");
