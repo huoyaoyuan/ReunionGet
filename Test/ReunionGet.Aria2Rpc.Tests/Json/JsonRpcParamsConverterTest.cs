@@ -1,4 +1,6 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using ReunionGet.Aria2Rpc.Json;
 using ReunionGet.Aria2Rpc.Json.Converters;
 using Xunit;
@@ -86,6 +88,23 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
             };
             TestSerialization(batch,
                 "[\"token\",[{\"methodName\":\"test.testMethod\",\"params\":[\"abc\",114514]},{\"methodName\":\"test.testMethod\",\"params\":[\"def\",1919810]}]]");
+        }
+
+        private class TestParams2 : RpcParams<bool>
+        {
+            protected internal override string MethodName => "test.testMethod";
+
+            [JsonConverter(typeof(Base64MemoryConverter))]
+            public ReadOnlyMemory<byte> Bytes { get; set; }
+        }
+
+        [Fact]
+        public void TestNestedConverterAttribute()
+        {
+            TestSerialization(new TestParams2
+            {
+                Bytes = new byte[] { 1, 2, 3, 4, 5 }
+            }, "[\"AQIDBAU=\"]");
         }
     }
 }

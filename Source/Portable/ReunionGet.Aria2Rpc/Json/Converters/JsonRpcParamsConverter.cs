@@ -54,7 +54,12 @@ namespace ReunionGet.Aria2Rpc.Json.Converters
 
         private class JsonConverterClosure
         {
+            public JsonConverterClosure(JsonConverter[] converters)
+                => Converters = converters;
 
+            public readonly JsonConverter[] Converters;
+
+            internal static FieldInfo ConvertersField = typeof(JsonConverterClosure).GetField(nameof(Converters))!;
         }
 
         private static WriteAction CreateWriteDelegate(Type valueType)
@@ -96,6 +101,8 @@ namespace ReunionGet.Aria2Rpc.Json.Converters
             writeBuilder.EmitCall(OpCodes.Callvirt, WriteStringValue, null);
 
             writeBuilder.MarkLabel(skipTokenLabel);
+
+            var closureBuilder = new List<JsonConverter>();
             foreach (var p in properties)
             {
                 if (p == RpcParams.TokenProperty)
@@ -104,10 +111,24 @@ namespace ReunionGet.Aria2Rpc.Json.Converters
                 if (p.GetMethod is null)
                     continue;
 
-                writeBuilder.Emit(OpCodes.Ldarg_3);
-                writeBuilder.Emit(OpCodes.Ldtoken, p.PropertyType);
-                writeBuilder.EmitCall(OpCodes.Call, GetTypeFromHandle, null);
-                writeBuilder.EmitCall(OpCodes.Callvirt, GetConverter, null);
+                if (p.GetCustomAttribute<JsonConverterAttribute>() is { } attr)
+                {
+                    writeBuilder.Emit(OpCodes.Ldarg_0);
+                    writeBuilder.Emit(OpCodes.Ldfld, JsonConverterClosure.ConvertersField);
+                    writeBuilder.Emit(OpCodes.Ldc_I4, closureBuilder.Count);
+                    writeBuilder.Emit(OpCodes.Ldelem_Ref);
+
+                    closureBuilder.Add(attr.CreateConverter(p.PropertyType)
+                        ?? (JsonConverter)Activator.CreateInstance(attr.ConverterType
+                            ?? throw new InvalidOperationException("Bad converter attribute."))!);
+                }
+                else
+                {
+                    writeBuilder.Emit(OpCodes.Ldarg_3);
+                    writeBuilder.Emit(OpCodes.Ldtoken, p.PropertyType);
+                    writeBuilder.EmitCall(OpCodes.Call, GetTypeFromHandle, null);
+                    writeBuilder.EmitCall(OpCodes.Callvirt, GetConverter, null);
+                }
 
                 writeBuilder.Emit(OpCodes.Ldarg_1);
                 writeBuilder.Emit(OpCodes.Ldloc, typedLocal);
@@ -141,7 +162,8 @@ namespace ReunionGet.Aria2Rpc.Json.Converters
             writeBuilder.EmitCall(OpCodes.Callvirt, WriteEndArray, null);
             writeBuilder.Emit(OpCodes.Ret);
 
-            return (WriteAction)writeMethod.CreateDelegate(typeof(WriteAction), new JsonConverterClosure());
+            return (WriteAction)writeMethod.CreateDelegate(typeof(WriteAction),
+                new JsonConverterClosure(closureBuilder.ToArray()));
         }
     }
 }
