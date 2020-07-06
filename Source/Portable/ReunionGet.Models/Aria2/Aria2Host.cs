@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using ReunionGet.Aria2Rpc;
 using ReunionGet.Aria2Rpc.Json;
 
@@ -10,12 +11,13 @@ namespace ReunionGet.Models.Aria2
     public sealed class Aria2Host : IDisposable, IAsyncDisposable
     {
         private readonly Process _process;
+        private readonly ILogger? _logger;
 
         public int ProcessId => _process.Id;
 
         public Aria2Connection Connection { get; }
 
-        public Aria2Host(string executablePath, string workingDirectory, string? token = null, int listeningPort = 6800)
+        public Aria2Host(string executablePath, string workingDirectory, string? token = null, int listeningPort = 6800, ILogger? logger = null)
         {
             if (token is null)
             {
@@ -57,6 +59,7 @@ namespace ReunionGet.Models.Aria2
             _process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start aria2 process.");
 
             Connection = new Aria2Connection("localhost", listeningPort, token, shutdownOnDisposal: true);
+            _logger = logger;
         }
 
         public void Dispose()
@@ -78,8 +81,8 @@ namespace ReunionGet.Models.Aria2
         /// <param name="token">The secret token specified for the instance.</param>
         /// <param name="processId">The process id of the instance.
         /// <see langword="null"/> if previous host fails to log its pid. </param>
-        /// <returns>The awaitable task of shutting down.</returns>
-        public static async ValueTask TryShutdownExistingInstanceAsync(int port, string token, int? processId)
+        /// <returns>If the specified port and token can be safely reused.</returns>
+        public static async ValueTask<bool> TryShutdownExistingInstanceAsync(int port, string token, int? processId)
         {
             if (processId is int id)
             {
@@ -88,12 +91,17 @@ namespace ReunionGet.Models.Aria2
                     using var process = Process.GetProcessById(id);
                     if (!process.HasExited)
                         process.Kill();
+                    return true;
                 }
                 catch (ArgumentException)
                 {
+                    // The process has exited. Assuming it's exited by external reason.
+                    return true;
                 }
                 catch (InvalidOperationException)
                 {
+                    // The process has exited during the query.
+                    return true;
                 }
             }
             else
@@ -102,12 +110,17 @@ namespace ReunionGet.Models.Aria2
                 {
                     await using var connection = new Aria2Connection("localhost", port, token);
                     // Let dispose to shutdown it
+                    return true;
                 }
                 catch (WebException)
                 {
+                    // Seems no process is listening to the port.
+                    return true;
                 }
                 catch (JsonRpcException)
                 {
+                    // The process rejects the shutdown request. The port cannot be reused.
+                    return false;
                 }
             }
         }
@@ -116,7 +129,7 @@ namespace ReunionGet.Models.Aria2
         {
             async Task<bool> InitialConnectionAsync(int retries, int interval)
             {
-                while (retries-- > 0)
+                for (int i = 0; i < retries; i++)
                 {
                     try
                     {
@@ -125,6 +138,8 @@ namespace ReunionGet.Models.Aria2
                     }
                     catch (JsonRpcException) // RPC is configured wrong.
                     {
+                        _logger?.OnEnabled(LogLevel.Critical)
+                            ?.LogCritical("The started aria2 instance refuses initial query.");
                         return false;
                     }
                     catch (WebException) // Maybe the process hasn't started
@@ -134,6 +149,8 @@ namespace ReunionGet.Models.Aria2
                     await Task.Delay(interval).ConfigureAwait(false);
                 }
 
+                _logger?.OnEnabled(LogLevel.Critical)
+                    ?.LogCritical($"Initial aria2 query fails with {retries} tries.");
                 return false;
             }
 
@@ -163,10 +180,11 @@ namespace ReunionGet.Models.Aria2
                     return;
                 }
 #pragma warning disable CA1031 // Don't catch general exception type
-                catch
+                catch (Exception e)
 #pragma warning restore CA1031 // Don't catch general exception type
                 {
-                    // should log
+                    _logger?.OnEnabled(LogLevel.Critical)
+                        ?.LogCritical(e, "An unexpected exception happens during refreshing loop.");
                     return;
                 }
 
