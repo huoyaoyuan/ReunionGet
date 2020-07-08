@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ReunionGet.Models;
 using ReunionGet.Models.Aria2;
 
 namespace ReunionGet.BTInteractive
@@ -16,11 +17,14 @@ namespace ReunionGet.BTInteractive
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
+            Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) => services
+                .AddSingleton<SimpleMessenger>()
+                .AddHostedService<BTInteractiveService>()
                 .AddHostedService<Aria2MonitorService>()
                 .Configure<Aria2HostOptions>(
                     context.Configuration.GetSection(Aria2HostOptions.SectionName))
+                .Configure<BTInteractiveOptions>(o => GetDownloadTask(o, args))
                 .PostConfigure<Aria2HostOptions>(AskFromCommandLine))
             .ConfigureAppConfiguration(configuration =>
                 configuration.AddJsonFile("aria2options.json", optional: true));
@@ -41,6 +45,17 @@ namespace ReunionGet.BTInteractive
                 string? line = Console.ReadLine();
                 if (!string.IsNullOrEmpty(line))
                     aria2.WorkingDirectory = line;
+            }
+        }
+
+        private static void GetDownloadTask(BTInteractiveOptions options, string[] args)
+        {
+            if (args.Length > 0)
+                options.MagnetOrTorrent = args[0];
+            else
+            {
+                Console.Write("Torrent path or magnet:");
+                options.MagnetOrTorrent = Console.ReadLine();
             }
         }
     }

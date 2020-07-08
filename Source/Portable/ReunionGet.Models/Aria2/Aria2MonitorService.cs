@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,19 +15,27 @@ namespace ReunionGet.Models.Aria2
     {
         private Aria2Host? _host;
         private readonly Aria2HostOptions _options;
+        private readonly SimpleMessenger _messenger;
         private readonly ILogger? _logger;
 
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private Task? _refreshTask;
 
-        public Aria2MonitorService(IOptions<Aria2HostOptions> options, ILogger<Aria2MonitorService>? logger = null)
+        private bool _disposed;
+
+        public Aria2MonitorService(IOptions<Aria2HostOptions> options, SimpleMessenger messenger, ILogger<Aria2MonitorService>? logger = null)
         {
             _options = options.Value;
+            _messenger = messenger;
             _logger = logger;
         }
 
         public void Dispose()
         {
+            if (_disposed)
+                return;
+            _disposed = true;
+
             _host?.Dispose();
             _host = null;
 
@@ -36,6 +45,10 @@ namespace ReunionGet.Models.Aria2
 
         public async ValueTask DisposeAsync()
         {
+            if (_disposed)
+                return;
+            _disposed = true;
+
             if (_host != null)
             {
                 await _host.DisposeAsync().ConfigureAwait(false);
@@ -46,41 +59,58 @@ namespace ReunionGet.Models.Aria2
             _cts.Dispose();
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
-            => Task.Run(() =>
+        public async Task StartAsync(CancellationToken cancellationToken)
+        {
+            await Task.Yield();
+
+            string executablePath = _options.ExecutablePath ?? "aria2c";
+            string workingDirectory = _options.WorkingDirectory ?? ".";
+
+            if (_logger?.IsEnabled(LogLevel.Information) == true)
             {
-                string executablePath = _options.ExecutablePath ?? "aria2c";
-                string workingDirectory = _options.WorkingDirectory ?? ".";
+                _logger.LogInformation("Using aria2 executable path: {0}", executablePath);
+                _logger.LogInformation("Using working directory: {0}", workingDirectory);
+                _logger.LogInformation("Using listening port: {0}", _options.ListenPort);
+            }
 
-                if (_logger?.IsEnabled(LogLevel.Information) == true)
-                {
-                    _logger.LogInformation("Using aria2 executable path: {0}", executablePath);
-                    _logger.LogInformation("Using working directory: {0}", workingDirectory);
-                    _logger.LogInformation("Using listening port: {0}", _options.ListenPort);
-                }
-
-                try
-                {
-                    _host = new Aria2Host(
-                        executablePath,
-                        workingDirectory,
-                        _options.Token,
-                        _options.ListenPort,
-                        _logger);
-                }
+            try
+            {
+                _host = new Aria2Host(
+                    executablePath,
+                    workingDirectory,
+                    _options.Token,
+                    _options.ListenPort,
+                    _logger);
+            }
 #pragma warning disable CA1031 // Don't catch general exception type
-                catch (Exception ex)
+            catch (Exception ex)
 #pragma warning restore CA1031 // Don't catch general exception type
-                {
-                    _logger?.LogCritical(ex, "Failed to start aria2 process.");
-                    return;
-                }
+            {
+                _logger?.LogCritical(ex, "Failed to start aria2 process.");
+                return;
+            }
 
-                _logger?.LogInformation("aria2 started with PID {0}.", _host.ProcessId);
-                _logger?.LogInformation("Using rpc token: {0}", _host.RpcToken);
+            _logger?.LogInformation("aria2 started with PID {0}.", _host.ProcessId);
+            _logger?.LogInformation("Using rpc token: {0}", _host.RpcToken);
 
-                _refreshTask = RefreshAsync();
-            }, cancellationToken);
+            _refreshTask = RefreshAsync();
+
+            string task = _messenger.Downloads.Take(cancellationToken);
+
+            if (task.StartsWith("magnet:", StringComparison.Ordinal))
+            {
+                _logger?.LogInformation("Adding magnet link: {0}", task);
+                var gid = await _host.Connection.AddUriAsync(task).ConfigureAwait(false);
+                _logger?.LogInformation("Magnet task added with GID {0}", gid);
+            }
+            else
+            {
+                _logger?.LogInformation("Adding torrent file: {0}", task);
+                using var stream = File.OpenRead(task);
+                var gid = await _host.Connection.AddTorrentAsync(stream).ConfigureAwait(false);
+                _logger?.LogInformation("Torrent task added with GID {0}", gid);
+            }
+        }
 
         public async Task StopAsync(CancellationToken cancellationToken)
         {
@@ -98,10 +128,10 @@ namespace ReunionGet.Models.Aria2
             _host = null;
         }
 
-
         private async Task RefreshAsync()
         {
             Debug.Assert(_host != null);
+            var token = _cts.Token;
 
             async Task<bool> InitialConnectionAsync(int retries, int interval)
             {
@@ -132,19 +162,18 @@ namespace ReunionGet.Models.Aria2
 
             if (!await InitialConnectionAsync(10, 1000).ConfigureAwait(false))
             {
-                Updated?.Invoke();
                 IsFaulted = true;
                 return;
             }
 
             while (true)
             {
-                if (_cts.IsCancellationRequested)
+                if (token.IsCancellationRequested)
                     return;
 
                 try
                 {
-                    _ = await _host.Connection.TellActiveAsync().ConfigureAwait(false);
+                    _messenger.Updated?.Invoke(await _host.Connection.TellActiveAsync().ConfigureAwait(false));
                 }
                 catch (TaskCanceledException)
                 {
@@ -166,13 +195,10 @@ namespace ReunionGet.Models.Aria2
                     return;
                 }
 
-                _logger?.LogInformation("Refreshed from aria2.");
-                Updated?.Invoke();
                 await Task.Delay(_options.RefreshInterval).ConfigureAwait(false);
             }
         }
 
         public bool IsFaulted { get; private set; }
-        public event Action? Updated;
     }
 }
