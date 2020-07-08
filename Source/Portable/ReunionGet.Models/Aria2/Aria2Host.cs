@@ -1,23 +1,51 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using ReunionGet.Aria2Rpc;
 using ReunionGet.Aria2Rpc.Json;
 
 namespace ReunionGet.Models.Aria2
 {
-    public sealed class Aria2Host : IDisposable, IAsyncDisposable
+    public sealed class Aria2Host : IHostedService, IDisposable, IAsyncDisposable
     {
-        private readonly Process _process;
+        private readonly ProcessStartInfo _processStartInfo;
         private readonly ILogger? _logger;
 
-        public int ProcessId => _process.Id;
+        public int ListeningPort { get; }
+        public string RpcToken { get; }
+        public int RefreshInterval { get; set; }
 
-        public Aria2Connection Connection { get; }
+        private Process? _process;
+        public int ProcessId => _process?.Id ?? throw new InvalidOperationException("Host not started or already exited.");
 
-        public Aria2Host(string executablePath, string workingDirectory, string? token = null, int listeningPort = 6800, ILogger? logger = null)
+        private Aria2Connection? _connection;
+        public Aria2Connection Connection => _connection ?? throw new InvalidOperationException("Host not started or already exited.");
+
+        private readonly CancellationTokenSource _cts = new CancellationTokenSource();
+        private Task? _refreshTask;
+
+        public Aria2Host(IOptions<Aria2HostOptions> options, ILoggerFactory? loggerFactory = null)
+            : this(options.Value.ExecutablePath ?? "aria2c",
+                 options.Value.WorkingDirectory ?? ".",
+                 options.Value.Token,
+                 options.Value.ListenPort,
+                 options.Value.RefreshInterval,
+                 loggerFactory?.CreateLogger<Aria2Host>())
+        {
+        }
+
+        public Aria2Host(
+            string executablePath,
+            string workingDirectory,
+            string? token = null,
+            int listeningPort = 6800,
+            int refreshInterval = 1000,
+            ILogger? logger = null)
         {
             if (token is null)
             {
@@ -41,7 +69,7 @@ namespace ReunionGet.Models.Aria2
                 token = GenerateRandomString(8);
             }
 
-            var psi = new ProcessStartInfo(executablePath)
+            _processStartInfo = new ProcessStartInfo(executablePath)
             {
                 WorkingDirectory = workingDirectory,
                 UseShellExecute = false,
@@ -56,22 +84,34 @@ namespace ReunionGet.Models.Aria2
                 }
             };
 
-            _process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start aria2 process.");
-
-            Connection = new Aria2Connection("localhost", listeningPort, token, shutdownOnDisposal: true);
+            ListeningPort = listeningPort;
+            RpcToken = token;
+            RefreshInterval = refreshInterval;
             _logger = logger;
         }
 
         public void Dispose()
         {
-            _process.Dispose();
-            Connection.Dispose();
+            _process?.Dispose();
+            _process = null;
+
+            _connection?.Dispose();
+            _connection = null;
+
+            _cts.Dispose();
         }
 
-        public ValueTask DisposeAsync()
+        public async ValueTask DisposeAsync()
         {
-            _process.Dispose();
-            return Connection.DisposeAsync();
+            _process?.Dispose();
+            _process = null;
+
+            if (_connection != null)
+            {
+                await _connection.DisposeAsync().ConfigureAwait(false);
+                _connection = null;
+            }
+            _cts.Dispose();
         }
 
         /// <summary>
@@ -125,7 +165,7 @@ namespace ReunionGet.Models.Aria2
             }
         }
 
-        private async void RefreshAsync()
+        private async Task RefreshAsync()
         {
             async Task<bool> InitialConnectionAsync(int retries, int interval)
             {
@@ -138,8 +178,7 @@ namespace ReunionGet.Models.Aria2
                     }
                     catch (JsonRpcException) // RPC is configured wrong.
                     {
-                        _logger?.OnEnabled(LogLevel.Critical)
-                            ?.LogCritical("The started aria2 instance refuses initial query.");
+                        _logger?.LogCritical("The started aria2 instance refuses initial query.");
                         return false;
                     }
                     catch (WebException) // Maybe the process hasn't started
@@ -149,8 +188,7 @@ namespace ReunionGet.Models.Aria2
                     await Task.Delay(interval).ConfigureAwait(false);
                 }
 
-                _logger?.OnEnabled(LogLevel.Critical)
-                    ?.LogCritical($"Initial aria2 query fails with {retries} tries.");
+                _logger?.LogCritical($"Initial aria2 query fails with {retries} tries.");
                 return false;
             }
 
@@ -163,6 +201,9 @@ namespace ReunionGet.Models.Aria2
 
             while (true)
             {
+                if (_cts.IsCancellationRequested)
+                    return;
+
                 try
                 {
                     _ = await Connection.TellActiveAsync().ConfigureAwait(false);
@@ -183,18 +224,66 @@ namespace ReunionGet.Models.Aria2
                 catch (Exception e)
 #pragma warning restore CA1031 // Don't catch general exception type
                 {
-                    _logger?.OnEnabled(LogLevel.Critical)
-                        ?.LogCritical(e, "An unexpected exception happens during refreshing loop.");
+                    _logger?.LogCritical(e, "An unexpected exception happens during refreshing loop.");
                     return;
                 }
 
                 Updated?.Invoke();
-                await Task.Delay(1000).ConfigureAwait(false);
+                await Task.Delay(RefreshInterval).ConfigureAwait(false);
             }
         }
 
         public bool IsFaulted { get; private set; }
 
         public event Action? Updated;
+
+        public Task StartAsync(CancellationToken cancellationToken)
+            => Task.Run(() =>
+            {
+                if (_logger?.IsEnabled(LogLevel.Information) == true)
+                {
+                    _logger.LogInformation("Using aria2 executable path: {0}", _processStartInfo.FileName);
+                    _logger.LogInformation("Using working directory: {0}", _processStartInfo.WorkingDirectory);
+                    _logger.LogInformation("Using rpc token: {0}", RpcToken);
+                    _logger.LogInformation("Using listening port: {0}", ListeningPort);
+                }
+
+                try
+                {
+                    _process = Process.Start(_processStartInfo) ?? throw new InvalidOperationException("Failed to start aria2 process.");
+                    _logger?.LogInformation("aria2 started with PID {0}.", _process.Id);
+                }
+#pragma warning disable CA1031 // Don't catch general exception type
+                catch (Exception ex)
+#pragma warning restore CA1031 // Don't catch general exception type
+                {
+                    _logger?.LogCritical(ex, "Failed to start aria2 process.");
+                    return;
+                }
+
+                _connection = new Aria2Connection("localhost", ListeningPort, RpcToken, shutdownOnDisposal: true);
+                _refreshTask = RefreshAsync();
+            }, cancellationToken);
+
+        public async Task StopAsync(CancellationToken cancellationToken)
+        {
+            if (_refreshTask is null)
+                return;
+
+            _cts.Cancel();
+            await _refreshTask.ConfigureAwait(false);
+            _refreshTask = null;
+            _logger?.LogInformation("Refreshing loop cancelled");
+
+            Debug.Assert(_connection != null);
+            await _connection.DisposeAsync().ConfigureAwait(false);
+            _connection = null;
+            _logger?.LogInformation("Shutdown request sent to aria2.");
+
+            Debug.Assert(_process != null);
+            await _process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            _process = null;
+            _logger?.LogInformation("Aria2 process exited.");
+        }
     }
 }
