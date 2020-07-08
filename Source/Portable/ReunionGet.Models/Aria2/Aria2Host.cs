@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using ReunionGet.Aria2Rpc;
 using ReunionGet.Aria2Rpc.Json;
 
@@ -12,12 +13,23 @@ namespace ReunionGet.Models.Aria2
     {
         private readonly ILogger? _logger;
 
-        private readonly Process _process;
-        public int ProcessId => _process.Id;
+        private readonly Process? _process;
+        public int ProcessId => _process?.Id ?? throw new InvalidOperationException("The aria2 process doesn't start succesfully.");
 
-        public Aria2Connection Connection { get; }
+        private readonly Aria2Connection? _connection;
+        public Aria2Connection Connection => _connection ?? throw new InvalidOperationException("The aria2 process doesn't start succesfully.");
 
-        public string RpcToken { get; }
+        public bool SuccessfullyStarted { get; }
+
+        public Aria2Host(IOptions<Aria2HostOptions> options, ILogger<Aria2Host>? logger = null)
+            : this(
+                options.Value.ExecutablePath ?? "aria2c",
+                options.Value.WorkingDirectory ?? ".",
+                options.Value.Token,
+                options.Value.ListenPort,
+                logger)
+        {
+        }
 
         public Aria2Host(
             string executablePath,
@@ -63,32 +75,59 @@ namespace ReunionGet.Models.Aria2
                 }
             };
 
-            _process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start aria2 process.");
-
-            Connection = new Aria2Connection("localhost", listeningPort, token, shutdownOnDisposal: true);
-            RpcToken = token;
             _logger = logger;
+
+            try
+            {
+                _logger?.LogInformation("Using aria2 executable path: {0}", executablePath);
+                _logger?.LogInformation("Using working directory: {0}", workingDirectory);
+                _logger?.LogInformation("Using listening port: {0}", listeningPort);
+                _logger?.LogInformation("Using RPC token: {0}", token);
+
+                _process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start aria2 process.");
+                _connection = new Aria2Connection("localhost", listeningPort, token, shutdownOnDisposal: true);
+
+                _logger?.LogInformation("aria2 started with PID {0}.", ProcessId);
+                SuccessfullyStarted = true;
+            }
+#pragma warning disable CA1031 // Don't catch general exception type
+            catch (Exception ex)
+#pragma warning restore CA1031 // Don't catch general exception type
+            {
+                _logger?.LogCritical(ex, "Failed to start aria2 process.");
+
+                _process = null;
+                _connection = null;
+
+                SuccessfullyStarted = false;
+            }
         }
 
         public void Dispose()
         {
-            _process.Dispose();
-            Connection.Dispose();
+            _process?.Dispose();
+            _connection?.Dispose();
         }
 
         public ValueTask DisposeAsync()
         {
-            _process.Dispose();
-            return Connection.DisposeAsync();
+            _process?.Dispose();
+            return _connection?.DisposeAsync() ?? default;
         }
 
         public async ValueTask WaitForShutdownAsync()
         {
-            await Connection.DisposeAsync().ConfigureAwait(false);
-            _logger?.LogInformation("RPC shotdown request sent to aria2.");
+            if (_connection != null)
+            {
+                await _connection.DisposeAsync().ConfigureAwait(false);
+                _logger?.LogInformation("RPC shotdown request sent to aria2.");
+            }
 
-            await _process.WaitForExitAsync().ConfigureAwait(false);
-            _logger?.LogInformation("aria2 process exited.");
+            if (_process != null)
+            {
+                await _process.WaitForExitAsync().ConfigureAwait(false);
+                _logger?.LogInformation("aria2 process exited.");
+            }
         }
 
         /// <summary>

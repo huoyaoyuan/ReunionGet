@@ -20,6 +20,7 @@ namespace ReunionGet.BTInteractive
             Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) => services
                 .AddSingleton<SimpleMessenger>()
+                .AddSingleton<Aria2Host>()
                 .AddHostedService<BTInteractiveService>()
                 .AddHostedService<Aria2MonitorService>()
                 .Configure<Aria2HostOptions>(
