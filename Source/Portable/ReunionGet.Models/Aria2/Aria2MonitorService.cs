@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
@@ -64,22 +63,6 @@ namespace ReunionGet.Models.Aria2
                 return;
 
             _refreshTask = RefreshAsync();
-
-            string task = _messenger.Downloads.Take(cancellationToken);
-
-            if (task.StartsWith("magnet:", StringComparison.Ordinal))
-            {
-                _logger?.LogInformation("Adding magnet link: {0}", task);
-                var gid = await _host.Connection.AddUriAsync(task).ConfigureAwait(false);
-                _logger?.LogInformation("Magnet task added with GID {0}", gid);
-            }
-            else
-            {
-                _logger?.LogInformation("Adding torrent file: {0}", task);
-                using var stream = File.OpenRead(task);
-                var gid = await _host.Connection.AddTorrentAsync(stream).ConfigureAwait(false);
-                _logger?.LogInformation("Torrent task added with GID {0}", gid);
-            }
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -140,7 +123,7 @@ namespace ReunionGet.Models.Aria2
 
                 try
                 {
-                    _messenger.Updated?.Invoke(await _host.Connection.TellActiveAsync().ConfigureAwait(false));
+                    _messenger.Post(await _host.Connection.TellActiveAsync().ConfigureAwait(false));
                 }
                 catch (TaskCanceledException)
                 {

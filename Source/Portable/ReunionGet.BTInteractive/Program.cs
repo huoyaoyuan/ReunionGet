@@ -21,8 +21,8 @@ namespace ReunionGet.BTInteractive
             .ConfigureServices((context, services) => services
                 .AddSingleton<SimpleMessenger>()
                 .AddSingleton<Aria2Host>()
-                .AddHostedService<BTInteractiveService>()
                 .AddHostedService<Aria2MonitorService>()
+                .AddHostedService<BTInteractiveService>()
                 .Configure<Aria2HostOptions>(
                     context.Configuration.GetSection(Aria2HostOptions.SectionName))
                 .Configure<BTInteractiveOptions>(o => GetDownloadTask(o, args))
