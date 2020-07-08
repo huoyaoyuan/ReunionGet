@@ -18,7 +18,7 @@ namespace ReunionGet.BTInteractive
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
             .ConfigureServices((context, services) => services
-                .AddHostedService<Aria2Host>()
+                .AddHostedService<Aria2MonitorService>()
                 .Configure<Aria2HostOptions>(
                     context.Configuration.GetSection(Aria2HostOptions.SectionName))
                 .PostConfigure<Aria2HostOptions>(AskFromCommandLine))
