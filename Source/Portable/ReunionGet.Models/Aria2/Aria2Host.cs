@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 using ReunionGet.Aria2Rpc;
 using ReunionGet.Aria2Rpc.Json;
 
@@ -9,15 +10,21 @@ namespace ReunionGet.Models.Aria2
 {
     public sealed class Aria2Host : IDisposable, IAsyncDisposable
     {
-        private readonly Process _process;
+        private readonly ILogger? _logger;
 
+        private readonly Process _process;
         public int ProcessId => _process.Id;
 
         public Aria2Connection Connection { get; }
 
         public string RpcToken { get; }
 
-        public Aria2Host(string executablePath, string workingDirectory, string? token = null, int listeningPort = 6800)
+        public Aria2Host(
+            string executablePath,
+            string workingDirectory,
+            string? token = null,
+            int listeningPort = 6800,
+            ILogger? logger = null)
         {
             if (token is null)
             {
@@ -60,6 +67,7 @@ namespace ReunionGet.Models.Aria2
 
             Connection = new Aria2Connection("localhost", listeningPort, token, shutdownOnDisposal: true);
             RpcToken = token;
+            _logger = logger;
         }
 
         public void Dispose()
@@ -77,7 +85,10 @@ namespace ReunionGet.Models.Aria2
         public async ValueTask WaitForShutdownAsync()
         {
             await Connection.DisposeAsync().ConfigureAwait(false);
+            _logger?.LogInformation("RPC shotdown request sent to aria2.");
+
             await _process.WaitForExitAsync().ConfigureAwait(false);
+            _logger?.LogInformation("aria2 process exited.");
         }
 
         /// <summary>

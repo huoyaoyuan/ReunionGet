@@ -19,10 +19,10 @@ namespace ReunionGet.Models.Aria2
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private Task? _refreshTask;
 
-        public Aria2MonitorService(IOptions<Aria2HostOptions> options, ILoggerFactory? loggerFactory = null)
+        public Aria2MonitorService(IOptions<Aria2HostOptions> options, ILogger<Aria2MonitorService>? logger = null)
         {
             _options = options.Value;
-            _logger = loggerFactory?.CreateLogger<Aria2MonitorService>();
+            _logger = logger;
         }
 
         public void Dispose()
@@ -65,7 +65,8 @@ namespace ReunionGet.Models.Aria2
                         executablePath,
                         workingDirectory,
                         _options.Token,
-                        _options.ListenPort);
+                        _options.ListenPort,
+                        _logger);
                 }
 #pragma warning disable CA1031 // Don't catch general exception type
                 catch (Exception ex)
