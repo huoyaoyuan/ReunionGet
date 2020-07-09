@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
@@ -72,6 +71,8 @@ namespace ReunionGet.Models.Aria2
                     $"--rpc-listen-port={listeningPort}",
                     $"--rpc-secret={token}",
                     "--bt-save-metadata=true",
+                    "--bt-load-saved-metadata=true",
+                    "--pause-metadata=true",
                     "-d ."
                 }
             };
