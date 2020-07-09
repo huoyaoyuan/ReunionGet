@@ -16,7 +16,7 @@ namespace ReunionGet.Aria2Rpc.Json.Converters
             };
 
         public override void Write(Utf8JsonWriter writer, int value, JsonSerializerOptions options)
-            => writer.WriteStringValue(value.ToString(NumberFormatInfo.InvariantInfo));
+            => writer.WriteNumberValue(value);
     }
 
     internal class QuotedLongConverter : JsonConverter<long>
@@ -30,7 +30,7 @@ namespace ReunionGet.Aria2Rpc.Json.Converters
             };
 
         public override void Write(Utf8JsonWriter writer, long value, JsonSerializerOptions options)
-            => writer.WriteStringValue(value.ToString(NumberFormatInfo.InvariantInfo));
+            => writer.WriteNumberValue(value);
     }
 
     internal class Aria2GIDConverter : JsonConverter<Aria2GID>

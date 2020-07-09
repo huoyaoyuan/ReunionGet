@@ -18,7 +18,7 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
     {
         public string jsonrpc { get; set; } = null!;
 
-        public string id { get; set; } = null!;
+        public int id { get; set; }
 
         public string method { get; set; } = null!;
 
@@ -29,7 +29,7 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
     {
         public string jsonrpc { get; set; } = null!;
 
-        public string id { get; set; } = null!;
+        public int id { get; set; }
 
         public object? result { get; set; }
 
@@ -104,7 +104,7 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
                     "token:abc",
                     new [] { "http://localhost" },
                     new { },
-                    "3"
+                    3
                 }, "1a2b3c4d5e"),
                 ("aria2.forceShutdown",
                 new[] { "token:abc" },
