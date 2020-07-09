@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -168,7 +169,7 @@ namespace ReunionGet.Models.Aria2
                     // Let dispose to shutdown it
                     return true;
                 }
-                catch (WebException)
+                catch (HttpRequestException)
                 {
                     // Seems no process is listening to the port.
                     return true;

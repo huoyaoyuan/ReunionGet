@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
@@ -99,7 +100,7 @@ namespace ReunionGet.Models.Aria2
                         _logger?.LogCritical("The started aria2 instance refuses initial query.");
                         return false;
                     }
-                    catch (WebException) // Maybe the process hasn't started
+                    catch (HttpRequestException) // Maybe the process hasn't started
                     {
                     }
 
