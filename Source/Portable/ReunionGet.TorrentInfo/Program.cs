@@ -46,8 +46,13 @@ namespace ReunionGet.TorrentInfo
 
                 Console.Write("Info hash: ");
                 Console.WriteLine(torrent.InfoHash.ToString());
-                Console.Write("Announce url: ");
-                Console.WriteLine(torrent.Announce.ToString());
+
+                if (torrent.Announce != null)
+                {
+                    Console.Write("Announce url: ");
+                    Console.WriteLine(torrent.Announce.ToString());
+                }
+
                 Console.Write("Name: ");
                 Console.WriteLine(torrent.Name);
 

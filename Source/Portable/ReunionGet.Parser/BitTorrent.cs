@@ -17,7 +17,7 @@ namespace ReunionGet.Parser
         // TODO: use MemberNotNullWhen and is not null
 
         #region Standard Specified Members
-        public Uri Announce { get; }
+        public Uri? Announce { get; }
 
         public string Name { get; }
 
@@ -62,7 +62,6 @@ namespace ReunionGet.Parser
 
         public BitTorrent(ReadOnlySpan<byte> content)
         {
-            string? announce = null;
             string? name = null;
 
             try
@@ -74,7 +73,7 @@ namespace ReunionGet.Parser
                     switch (reader.ReadString())
                     {
                         case "announce":
-                            announce = reader.ReadString();
+                            Announce = new Uri(reader.ReadString());
                             break;
 
                         case "info":
@@ -218,7 +217,6 @@ namespace ReunionGet.Parser
             }
 
             // Sanity check
-            Announce = new Uri(announce ?? throw new FormatException("The torrent doesn't have annouce part."));
             Name = name ?? throw new FormatException("The torrent doesn't have name part.");
 
             if (Files != null && SingleFileLength != null
@@ -265,7 +263,7 @@ namespace ReunionGet.Parser
             => new Magnet(MagnetHashAlgorithm.BTIH,
                 InfoHash,
                 displayName: Name,
-                trackers: AnnounceList ?? new[] { Announce },
+                trackers: AnnounceList ?? (Announce is null ? Array.Empty<Uri>() : new[] { Announce }),
                 exactLength: SingleFileLength);
     }
 }
