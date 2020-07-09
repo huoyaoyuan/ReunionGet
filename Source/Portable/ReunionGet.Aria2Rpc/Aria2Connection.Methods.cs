@@ -376,7 +376,7 @@ namespace ReunionGet.Aria2Rpc
             if (num < 0)
                 throw new ArgumentOutOfRangeException(nameof(num), "num must be positive");
 
-            return DoRpcAsync(new TellWaitingRequest
+            return DoRpcAsync(new TellStoppedRequest
             {
                 Offset = offset,
                 Num = num,

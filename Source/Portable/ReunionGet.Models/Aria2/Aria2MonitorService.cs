@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
@@ -124,7 +125,10 @@ namespace ReunionGet.Models.Aria2
 
                 try
                 {
-                    _messenger.Post(await _host.Connection.TellActiveAsync().ConfigureAwait(false));
+                    var active = await _host.Connection.TellActiveAsync().ConfigureAwait(false);
+                    var waiting = await _host.Connection.TellWaitingAsync(0, 10).ConfigureAwait(false);
+                    var stopped = await _host.Connection.TellStoppedAsync(0, 10).ConfigureAwait(false);
+                    _messenger.Post(active.Concat(waiting).Concat(stopped).ToArray());
                 }
                 catch (TaskCanceledException)
                 {
