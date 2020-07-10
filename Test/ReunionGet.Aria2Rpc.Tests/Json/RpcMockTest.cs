@@ -54,7 +54,8 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
 
             Assert.NotNull(request.Content!.Headers.ContentLength); // aira2 quirk: content length must be set
 
-            var requestObj = await request.Content.ReadFromJsonAsync<RequestObjectTemplate>().ConfigureAwait(false);
+            var requestObj = await request.Content.ReadFromJsonAsync<RequestObjectTemplate>(cancellationToken: cancellationToken)
+                .ConfigureAwait(false);
             Assert.Equal("2.0", requestObj.jsonrpc);
 
             foreach (var (method, req, rsp) in _possibleResults)

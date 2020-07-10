@@ -256,20 +256,19 @@ namespace ReunionGet.Parser
                 _ => 8
             };
 
-            uint b5 = source.Length >= 5 ? source[4] : 0U;
-            uint b4 = source.Length >= 4 ? source[3] : 0U;
-            uint b3 = source.Length >= 3 ? source[2] : 0U;
-            uint b2 = source.Length >= 2 ? source[1] : 0U;
-            uint b1 = source.Length >= 1 ? source[0] : 0U;
+            Span<byte> sourcePadded = stackalloc byte[] { 0, 0, 0, 0, 0 };
+            if (source.Length > 5)
+                source = source[0..5];
+            source.CopyTo(sourcePadded);
 
-            dest[0] = (byte)(b1 >> 3);
-            dest[1] = (byte)(((b1 & 0b_0000_0111) << 2) | (b2 >> 6));
-            dest[2] = (byte)((b2 >> 1) & 0b_0001_1111);
-            dest[3] = (byte)(((b2 & 0b_0000_0001) << 4) | (b3 >> 4));
-            dest[4] = (byte)(((b3 & 0b_0000_1111) << 1) | (b4 >> 7));
-            dest[5] = (byte)((b4 >> 2) & 0b_0001_1111);
-            dest[6] = (byte)(((b4 & 0b_0000_0011) << 3) | (b5 >> 5));
-            dest[7] = (byte)(b5 & 0b_0001_1111);
+            dest[0] = (byte)(sourcePadded[0] >> 3);
+            dest[1] = (byte)(((sourcePadded[0] & 0b_0000_0111) << 2) | (sourcePadded[1] >> 6));
+            dest[2] = (byte)((sourcePadded[1] >> 1) & 0b_0001_1111);
+            dest[3] = (byte)(((sourcePadded[1] & 0b_0000_0001) << 4) | (sourcePadded[2] >> 4));
+            dest[4] = (byte)(((sourcePadded[2] & 0b_0000_1111) << 1) | (sourcePadded[3] >> 7));
+            dest[5] = (byte)((sourcePadded[3] >> 2) & 0b_0001_1111);
+            dest[6] = (byte)(((sourcePadded[3] & 0b_0000_0011) << 3) | (sourcePadded[4] >> 5));
+            dest[7] = (byte)(sourcePadded[4] & 0b_0001_1111);
 
             for (int i = 0; i < dest.Length; i++)
                 if (i >= written)
