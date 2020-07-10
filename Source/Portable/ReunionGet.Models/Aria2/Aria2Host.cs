@@ -70,9 +70,9 @@ namespace ReunionGet.Models.Aria2
                     "--enable-rpc=true",
                     $"--rpc-listen-port={listeningPort}",
                     $"--rpc-secret={token}",
-                    "--bt-save-metadata=true",
-                    "--bt-load-saved-metadata=true",
                     "--pause-metadata=true",
+                    "--bt-save-metadata=true",
+                    "--rpc-save-upload-metadata=false",
                     "-d ."
                 }
             };

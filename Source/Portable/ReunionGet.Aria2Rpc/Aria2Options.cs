@@ -33,6 +33,12 @@ namespace ReunionGet.Aria2Rpc
         [JsonPropertyName("select-file")]
         public string? SelectFile { get; set; }
 
+        [JsonPropertyName("bt-save-metadata")]
+        public bool? BTSaveMetadata { get; set; }
+
+        [JsonPropertyName("pause")]
+        public bool? Pause { get; set; }
+
         //[JsonExtensionData]
         //public Dictionary<string, string> Other { get; set; } = new Dictionary<string, string>();
 

@@ -31,7 +31,7 @@ namespace ReunionGet.Parser
         public static bool operator !=(HashBlock left, HashBlock right) => !(left == right);
 
         /// <summary>
-        /// Get a Hex representation of this <see cref="HashBlock"/>.
+        /// Get uppercase Hex representation of this <see cref="HashBlock"/>.
         /// </summary>
         /// <returns>Hex representation string.</returns>
         public override string ToString()
@@ -41,6 +41,19 @@ namespace ReunionGet.Parser
             {
                 for (int i = 0; i < array.Length; i++)
                     _ = array[i].TryFormat(span.Slice(i * 2), out _, "X2");
+            });
+
+        /// <summary>
+        /// Get lowercase Hex representation of this <see cref="HashBlock"/>.
+        /// </summary>
+        /// <returns>Hex representation string.</returns>
+        public string ToStringLower()
+            => _hash is null
+            ? string.Empty
+            : string.Create(_hash.Length * 2, _hash, (span, array) =>
+            {
+                for (int i = 0; i < array.Length; i++)
+                    _ = array[i].TryFormat(span.Slice(i * 2), out _, "x2");
             });
 
         public string ToBase32() => string.Create(
