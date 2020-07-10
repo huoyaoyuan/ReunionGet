@@ -150,6 +150,9 @@ namespace ReunionGet.Models.Aria2
                     return;
                 }
 
+                if (token.IsCancellationRequested)
+                    return;
+
                 await Task.Delay(_options.RefreshInterval).ConfigureAwait(false);
             }
         }

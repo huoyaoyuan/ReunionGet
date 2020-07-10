@@ -23,6 +23,7 @@ namespace ReunionGet.BTInteractive
                 .AddSingleton<Aria2Host>()
                 .AddHostedService<Aria2MonitorService>()
                 .AddHostedService<BTInteractiveService>()
+                .Configure<HostOptions>(o => o.ShutdownTimeout = TimeSpan.FromMinutes(1))
                 .Configure<Aria2HostOptions>(
                     context.Configuration.GetSection(Aria2HostOptions.SectionName))
                 .Configure<BTInteractiveOptions>(o => GetDownloadTask(o, args))

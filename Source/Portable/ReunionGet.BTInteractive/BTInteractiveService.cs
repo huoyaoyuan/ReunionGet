@@ -108,7 +108,7 @@ namespace ReunionGet.BTInteractive
                 }
             }
 
-            if (progresses.Any(t => t.Status == DownloadStatus.Complete))
+            if (!progresses.Any(t => t.Status == DownloadStatus.Active))
                 _lifetime.StopApplication();
         }
     }
