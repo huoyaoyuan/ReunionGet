@@ -19,6 +19,8 @@ namespace ReunionGet.Models.Aria2
         private readonly Aria2Connection? _connection;
         public Aria2Connection Connection => _connection ?? throw new InvalidOperationException("The aria2 process doesn't start succesfully.");
 
+        public int ListenPort { get; }
+
         public bool SuccessfullyStarted { get; }
 
         public Aria2Host(IOptions<Aria2HostOptions> options, ILogger<Aria2Host>? logger = null)
@@ -35,7 +37,7 @@ namespace ReunionGet.Models.Aria2
             string executablePath,
             string workingDirectory,
             string? token = null,
-            int listeningPort = 6800,
+            int? listeningPort = null,
             ILogger? logger = null)
         {
             if (token is null)
@@ -60,6 +62,8 @@ namespace ReunionGet.Models.Aria2
                 token = GenerateRandomString(8);
             }
 
+            ListenPort = listeningPort ?? new Random().Next(6000, 7000);
+
             var psi = new ProcessStartInfo(executablePath)
             {
                 WorkingDirectory = workingDirectory,
@@ -68,7 +72,7 @@ namespace ReunionGet.Models.Aria2
                 ArgumentList =
                 {
                     "--enable-rpc=true",
-                    $"--rpc-listen-port={listeningPort}",
+                    $"--rpc-listen-port={ListenPort}",
                     $"--rpc-secret={token}",
                     "--pause-metadata=true",
                     "--bt-save-metadata=true",
@@ -83,11 +87,11 @@ namespace ReunionGet.Models.Aria2
             {
                 _logger?.LogInformation("Using aria2 executable path: {0}", executablePath);
                 _logger?.LogInformation("Using working directory: {0}", workingDirectory);
-                _logger?.LogInformation("Using listening port: {0}", listeningPort);
+                _logger?.LogInformation("Using listening port: {0}", ListenPort);
                 _logger?.LogInformation("Using RPC token: {0}", token);
 
                 _process = Process.Start(psi) ?? throw new InvalidOperationException("Failed to start aria2 process.");
-                _connection = new Aria2Connection("localhost", listeningPort, token, shutdownOnDisposal: true);
+                _connection = new Aria2Connection("localhost", ListenPort, token, shutdownOnDisposal: true);
 
                 _logger?.LogInformation("aria2 started with PID {0}.", ProcessId);
                 SuccessfullyStarted = true;

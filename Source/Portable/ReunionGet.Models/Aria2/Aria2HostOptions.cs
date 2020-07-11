@@ -4,7 +4,7 @@
     {
         public const string SectionName = "Aria2Startup";
 
-        public int ListenPort { get; set; } = 6800;
+        public int? ListenPort { get; set; }
 
         public int RefreshInterval { get; set; } = 1000;
 
