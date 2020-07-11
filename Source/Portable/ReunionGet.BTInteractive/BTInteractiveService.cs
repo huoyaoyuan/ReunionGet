@@ -46,6 +46,7 @@ namespace ReunionGet.BTInteractive
                 _logger?.LogInformation("Adding magnet link: {0}", magnet);
                 _gid = await _aria2Host.Connection.AddUriAsync(magnet).ConfigureAwait(false);
                 _logger?.LogInformation("Magnet task added with GID {0}", _gid);
+                _state = State.Medadata;
             }
 
             async Task AddTorrentAsync(string torrentPath)
@@ -58,6 +59,7 @@ namespace ReunionGet.BTInteractive
                         Pause = true
                     }).ConfigureAwait(false);
                 _logger?.LogInformation("Torrent task added with GID {0}", _gid);
+                _state = State.BeforeTorrent;
             }
 
             if (_magnetOrTorrent.StartsWith("magnet:", StringComparison.Ordinal))
@@ -108,9 +110,62 @@ namespace ReunionGet.BTInteractive
                 }
             }
 
-            if (!progresses.Any(t => t.Status == DownloadStatus.Active))
-                _lifetime.StopApplication();
+            if (progresses.SingleOrDefault(t => t.Gid == _gid) is { } t)
+            {
+                switch (_state)
+                {
+                    case State.Medadata:
+                        if (t.Status == DownloadStatus.Complete)
+                        {
+                            _gid = t.FollowedBy![0];
+                            _state = State.BeforeTorrent;
+                        }
+                        break;
+
+                    case State.BeforeTorrent:
+                    {
+                        Console.WriteLine("Listing torrent files:");
+                        foreach (var file in t.Files!)
+                        {
+                            Console.Write($"{file.Index}. ");
+                            Console.ForegroundColor = ConsoleColor.DarkCyan;
+                            Console.Write(file.Path);
+                            Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                            Console.WriteLine($" {file.Length:N0}B");
+                            Console.ResetColor();
+                        }
+
+                        Console.Write("Select file index(empty to select all):");
+                        string? selected = Console.ReadLine();
+                        if (!string.IsNullOrWhiteSpace(selected))
+                        {
+                            _aria2Host.Connection.ChangeOptionAsync(_gid, new Aria2Options
+                            {
+                                SelectFile = selected
+                            }).Wait();
+                        }
+
+                        _aria2Host.Connection.UnpauseAsync(_gid).Wait();
+                        _state = State.Torrent;
+                        break;
+                    }
+
+                    case State.Torrent:
+                        if (t.Status == DownloadStatus.Complete)
+                            _lifetime.StopApplication();
+                        break;
+                }
+            }
         }
+
+        private enum State
+        {
+            Medadata,
+            BeforeTorrent,
+            Torrent
+        }
+
+        private State _state;
     }
 
     public class BTInteractiveOptions
