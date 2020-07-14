@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Benchmark Base32": {
+      "commandName": "Project",
+      "commandLineArgs": "--filter Base32Benchmark"
+    }
+  }
+}

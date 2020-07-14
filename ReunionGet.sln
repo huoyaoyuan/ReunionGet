@@ -43,6 +43,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Scripts", "Scripts", "{A41C
 		Scripts\Install-Tools.ps1 = Scripts\Install-Tools.ps1
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReunionGet.Benchmarks", "Source\Portable\ReunionGet.Benchmarks\ReunionGet.Benchmarks.csproj", "{9C408CA3-6C9E-483E-B6C6-0DFCFAEA426F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -77,6 +79,10 @@ Global
 		{61B3A098-1E1C-4E56-8EED-5F09C7077E50}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{61B3A098-1E1C-4E56-8EED-5F09C7077E50}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{61B3A098-1E1C-4E56-8EED-5F09C7077E50}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C408CA3-6C9E-483E-B6C6-0DFCFAEA426F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C408CA3-6C9E-483E-B6C6-0DFCFAEA426F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C408CA3-6C9E-483E-B6C6-0DFCFAEA426F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C408CA3-6C9E-483E-B6C6-0DFCFAEA426F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -90,6 +96,7 @@ Global
 		{E4C28004-4B6B-49E4-9FD6-5FD5F432FF09} = {385054D4-2D39-4F6D-A018-CE1D986D679A}
 		{614970B8-CF2E-4A1E-BE43-7FE1C632B1BA} = {5291FA91-B55C-45B0-8247-76E9AEDAF360}
 		{61B3A098-1E1C-4E56-8EED-5F09C7077E50} = {5291FA91-B55C-45B0-8247-76E9AEDAF360}
+		{9C408CA3-6C9E-483E-B6C6-0DFCFAEA426F} = {5291FA91-B55C-45B0-8247-76E9AEDAF360}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {50D99955-3D39-4A91-A30C-8E2F7D084CD7}
