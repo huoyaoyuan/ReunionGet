@@ -33,9 +33,7 @@ namespace ReunionGet.Aria2Rpc
         private bool _disposed;
         public bool ShutDown { get; private set; }
 
-#pragma warning disable CA2012 // Use ValueTask correctly
-        public void Dispose() => _ = DisposeAsync(); // never waited
-#pragma warning restore CA2012 // Use ValueTask correctly
+        public void Dispose() => _ = DisposeAsync().AsTask();
 
         public async ValueTask DisposeAsync()
         {
