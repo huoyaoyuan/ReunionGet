@@ -96,9 +96,7 @@ namespace ReunionGet.Models.Aria2
                 _logger?.LogInformation("aria2 started with PID {0}.", ProcessId);
                 SuccessfullyStarted = true;
             }
-#pragma warning disable CA1031 // Don't catch general exception type
             catch (Exception ex)
-#pragma warning restore CA1031 // Don't catch general exception type
             {
                 _logger?.LogCritical(ex, "Failed to start aria2 process.");
 

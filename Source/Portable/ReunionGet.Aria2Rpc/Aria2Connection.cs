@@ -48,9 +48,7 @@ namespace ReunionGet.Aria2Rpc
                 {
                     _ = await ForceShutdownAsync().ConfigureAwait(false);
                 }
-#pragma warning disable CA1031 // Don't catch general exception type
                 catch
-#pragma warning restore CA1031 // Don't catch general exception type
                 {
                     // Dispose should not throw
                 }

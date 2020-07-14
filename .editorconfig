@@ -170,6 +170,9 @@ dotnet_diagnostic.IDE0005.severity = warning
 # IDE0055: Fix formatting
 dotnet_diagnostic.IDE0055.severity = warning
 
+# CA1031: Do not catch general exception types
+dotnet_diagnostic.CA1031.severity = none
+
 # CA1032: Implement standard exception constructor
 dotnet_diagnostic.CA1032.severity = silent
 
@@ -182,13 +185,13 @@ dotnet_diagnostic.CA1062.severity = none
 # CA1303: Do not pass literals as localized parameters
 dotnet_diagnostic.CA1303.severity = none
 
-# CA2000: Dispose object before exiting scope
+# CA2000: Dispose objects before losing scope
 dotnet_diagnostic.CA2000.severity = silent
 
-# CA2225: operator overload should have named alternative
+# CA2225: Operator overloads have named alternates
 dotnet_diagnostic.CA2225.severity = none
 
-# CA2234: Pass System.Uri object instead of string
+# CA2234: Pass system uri objects instead of strings
 dotnet_diagnostic.CA2234.severity = none
 
 # CA5350: Do Not Use Weak Cryptographic Algorithms

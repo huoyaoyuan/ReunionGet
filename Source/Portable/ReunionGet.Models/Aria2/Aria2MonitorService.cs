@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -138,13 +137,11 @@ namespace ReunionGet.Models.Aria2
                 {
                     return;
                 }
-                catch (WebException)
+                catch (HttpRequestException)
                 {
                     return;
                 }
-#pragma warning disable CA1031 // Don't catch general exception type
                 catch (Exception e)
-#pragma warning restore CA1031 // Don't catch general exception type
                 {
                     _logger?.LogCritical(e, "An unexpected exception happens during refreshing loop.");
                     return;
