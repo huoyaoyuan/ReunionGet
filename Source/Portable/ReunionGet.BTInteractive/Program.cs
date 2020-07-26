@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using ReunionGet.Models;
 using ReunionGet.Models.Aria2;
 
 namespace ReunionGet.BTInteractive
@@ -19,7 +18,7 @@ namespace ReunionGet.BTInteractive
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) => services
-                .AddSingleton<SimpleMessenger>()
+                .AddSingleton<Aria2State>()
                 .AddSingleton<Aria2Host>()
                 .AddHostedService<Aria2MonitorService>()
                 .AddHostedService<BTInteractiveService>()

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using ReunionGet.Aria2Rpc;
 using ReunionGet.Aria2Rpc.Json;
 using ReunionGet.Aria2Rpc.Json.Responses;
 
@@ -7,11 +9,11 @@ namespace ReunionGet.Models.Aria2
 {
     public class Aria2Task
     {
-        private readonly Aria2Host _host;
+        private readonly Aria2Connection _connection;
 
-        public Aria2Task(Aria2Host host, Aria2GID gid, Aria2Task? following = null)
+        public Aria2Task(Aria2Connection connection, Aria2GID gid, Aria2Task? following = null)
         {
-            _host = host;
+            _connection = connection;
             GID = gid;
             Following = following;
         }
@@ -35,7 +37,7 @@ namespace ReunionGet.Models.Aria2
         internal void Load(DownloadProgressStatus rpcResponse)
         {
             RpcResponse = rpcResponse;
-            StatusLoaded?.Invoke();
+            StatusUpdated?.Invoke();
         }
 
         internal void AddFollowedTask(Aria2Task followedTask)
@@ -45,8 +47,35 @@ namespace ReunionGet.Models.Aria2
             FollowedTaskAdded?.Invoke(followedTask);
         }
 
-        public event Action? StatusLoaded;
+        public event Action? StatusUpdated;
 
         public event Action<Aria2Task>? FollowedTaskAdded;
+
+        public Task PauseAsync()
+        {
+            if (!Loaded)
+                throw new InvalidOperationException("The task hasn't been loaded.");
+
+            return _connection.PauseAsync(GID);
+        }
+
+        public Task UnpauseAsync()
+        {
+            if (!Loaded)
+                throw new InvalidOperationException("The task hasn't been loaded.");
+
+            return _connection.UnpauseAsync(GID);
+        }
+
+        public Task SetFilesAsync(string selectedFiles)
+        {
+            if (!Loaded)
+                throw new InvalidOperationException("The task hasn't been loaded.");
+
+            return _connection.ChangeOptionAsync(GID, new Aria2Options
+            {
+                SelectFile = selectedFiles
+            });
+        }
     }
 }

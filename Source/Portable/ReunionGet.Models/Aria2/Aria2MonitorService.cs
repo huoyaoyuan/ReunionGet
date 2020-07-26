@@ -15,7 +15,7 @@ namespace ReunionGet.Models.Aria2
     {
         private readonly Aria2HostOptions _options;
         private readonly Aria2Host _host;
-        private readonly SimpleMessenger _messenger;
+        private readonly Aria2State _state;
         private readonly ILogger? _logger;
 
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
@@ -23,11 +23,15 @@ namespace ReunionGet.Models.Aria2
 
         private bool _disposed;
 
-        public Aria2MonitorService(IOptions<Aria2HostOptions> options, Aria2Host host, SimpleMessenger messenger, ILogger<Aria2MonitorService>? logger = null)
+        public Aria2MonitorService(
+            IOptions<Aria2HostOptions> options,
+            Aria2Host host,
+            Aria2State state,
+            ILogger<Aria2MonitorService>? logger = null)
         {
             _options = options.Value;
             _host = host;
-            _messenger = messenger;
+            _state = state;
             _logger = logger;
         }
 
@@ -124,10 +128,29 @@ namespace ReunionGet.Models.Aria2
 
                 try
                 {
-                    var active = await _host.Connection.TellActiveAsync().ConfigureAwait(false);
-                    var waiting = await _host.Connection.TellWaitingAsync(0, 10).ConfigureAwait(false);
-                    var stopped = await _host.Connection.TellStoppedAsync(0, 10).ConfigureAwait(false);
-                    _messenger.Post(active.Concat(waiting).Concat(stopped).ToArray());
+                    var tasks = (await _host.Connection.TellActiveAsync().ConfigureAwait(true)).AsEnumerable();
+
+                    for (int i = 0; true; i += 10)
+                    {
+                        var waiting = await _host.Connection.TellWaitingAsync(i, 10).ConfigureAwait(false);
+
+                        if (waiting.Length == 0)
+                            break;
+
+                        tasks = tasks.Concat(waiting);
+                    }
+
+                    for (int i = 0; true; i += 10)
+                    {
+                        var stopped = await _host.Connection.TellStoppedAsync(i, 10).ConfigureAwait(false);
+
+                        if (stopped.Length == 0)
+                            break;
+
+                        tasks = tasks.Concat(stopped);
+                    }
+
+                    _state.PostAllTrackedRefresh(tasks);
                 }
                 catch (TaskCanceledException)
                 {

@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using ReunionGet.Aria2Rpc;
-using ReunionGet.Aria2Rpc.Json;
 using ReunionGet.Aria2Rpc.Json.Responses;
 using ReunionGet.Models;
 using ReunionGet.Models.Aria2;
@@ -19,22 +16,20 @@ namespace ReunionGet.BTInteractive
     public class BTInteractiveService : IHostedService
     {
         private readonly string _magnetOrTorrent;
-        private readonly Aria2Host _aria2Host;
-        private readonly SimpleMessenger _messenger;
+        private readonly Aria2State _aria2State;
         private readonly IHostApplicationLifetime _lifetime;
         private readonly ILogger<BTInteractiveService>? _logger;
-        private Aria2GID _gid;
+
+        private Aria2Task? _currentTask;
 
         public BTInteractiveService(
             IOptions<BTInteractiveOptions> options,
-            Aria2Host aria2Host,
-            SimpleMessenger messenger,
+            Aria2State state,
             IHostApplicationLifetime lifetime,
             ILogger<BTInteractiveService>? logger = null)
         {
             _magnetOrTorrent = options.Value.MagnetOrTorrent ?? throw new InvalidOperationException("Misconfigured option.");
-            _aria2Host = aria2Host;
-            _messenger = messenger;
+            _aria2State = state;
             _lifetime = lifetime;
             _logger = logger;
         }
@@ -44,22 +39,18 @@ namespace ReunionGet.BTInteractive
             async Task AddMagnetAsync(string magnet)
             {
                 _logger?.LogInformation("Adding magnet link: {0}", magnet);
-                _gid = await _aria2Host.Connection.AddUriAsync(magnet).ConfigureAwait(false);
-                _logger?.LogInformation("Magnet task added with GID {0}", _gid);
-                _state = State.Medadata;
+                _currentTask = await _aria2State.AddMangetTaskAsync(magnet).ConfigureAwait(false);
+                _logger?.LogInformation("Magnet task added with GID {0}", _currentTask.GID);
+                _currentTask.StatusUpdated += OnMagnetUpdated;
             }
 
             async Task AddTorrentAsync(string torrentPath)
             {
                 _logger?.LogInformation("Adding torrent file: {0}", torrentPath);
                 using var stream = File.OpenRead(torrentPath);
-                _gid = await _aria2Host.Connection.AddTorrentAsync(stream,
-                    options: new Aria2Options
-                    {
-                        Pause = true
-                    }).ConfigureAwait(false);
-                _logger?.LogInformation("Torrent task added with GID {0}", _gid);
-                _state = State.BeforeTorrent;
+                _currentTask = await _aria2State.AddTorrentTaskAsync(stream).ConfigureAwait(false);
+                _logger?.LogInformation("Torrent task added with GID {0}", _currentTask.GID);
+                _currentTask.StatusUpdated += InitTorrentTaskLoaded;
             }
 
             if (_magnetOrTorrent.StartsWith("magnet:", StringComparison.Ordinal))
@@ -82,90 +73,94 @@ namespace ReunionGet.BTInteractive
             {
                 await AddTorrentAsync(_magnetOrTorrent).ConfigureAwait(false);
             }
-
-            _messenger.Updated += OnUpdated;
-
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        private void OnMagnetUpdated()
         {
-            _messenger.Updated -= OnUpdated;
-            return Task.CompletedTask;
-        }
+            Debug.Assert(_currentTask != null);
+            PrintStatus(_currentTask.RpcResponse!);
 
-        private void OnUpdated(IReadOnlyList<DownloadProgressStatus> progresses)
-        {
-            foreach (var task in progresses)
+            if (_currentTask.RpcResponse!.Status == DownloadStatus.Complete)
             {
-                Console.WriteLine("================");
-                Console.WriteLine($"Status: {task.Status}");
-                Console.WriteLine($"Download: {task.DownloadSpeed:N0} B/s Upload: {task.UploadSpeed:N0} B/s");
-                Console.WriteLine("Files:");
-                foreach (var file in task.Files!)
+                _currentTask.StatusUpdated -= OnMagnetUpdated;
+
+                using (_aria2State.TasksLock.UseReadLock())
                 {
-                    Console.Write($"{file.CompletedLength:N0}B/{file.Length:N0}B\t\t");
-                    Console.ForegroundColor = ConsoleColor.DarkCyan;
-                    Console.WriteLine(file.Path);
-                    Console.ResetColor();
-                }
-            }
-
-            if (progresses.SingleOrDefault(t => t.Gid == _gid) is { } t)
-            {
-                switch (_state)
-                {
-                    case State.Medadata:
-                        if (t.Status == DownloadStatus.Complete)
-                        {
-                            _gid = t.FollowedBy![0];
-                            _state = State.BeforeTorrent;
-                        }
-                        break;
-
-                    case State.BeforeTorrent:
-                    {
-                        Console.WriteLine("Listing torrent files:");
-                        foreach (var file in t.Files!)
-                        {
-                            Console.Write($"{file.Index}. ");
-                            Console.ForegroundColor = ConsoleColor.DarkCyan;
-                            Console.Write(file.Path);
-                            Console.ForegroundColor = ConsoleColor.DarkMagenta;
-                            Console.WriteLine($" {file.Length:N0}B");
-                            Console.ResetColor();
-                        }
-
-                        Console.Write("Select file index(empty to select all):");
-                        string? selected = Console.ReadLine();
-                        if (!string.IsNullOrWhiteSpace(selected))
-                        {
-                            _aria2Host.Connection.ChangeOptionAsync(_gid, new Aria2Options
-                            {
-                                SelectFile = selected
-                            }).Wait();
-                        }
-
-                        _aria2Host.Connection.UnpauseAsync(_gid).Wait();
-                        _state = State.Torrent;
-                        break;
-                    }
-
-                    case State.Torrent:
-                        if (t.Status == DownloadStatus.Complete)
-                            _lifetime.StopApplication();
-                        break;
+                    if (_currentTask.FollowedTasks.Count > 0)
+                        PrepareTorrentTask(_currentTask.FollowedTasks[0]);
+                    else
+                        _currentTask.FollowedTaskAdded += PrepareTorrentTask;
                 }
             }
         }
 
-        private enum State
+        private void PrepareTorrentTask(Aria2Task torrentTask)
         {
-            Medadata,
-            BeforeTorrent,
-            Torrent
+            Debug.Assert(_currentTask != null);
+            _currentTask.FollowedTaskAdded -= PrepareTorrentTask;
+            _currentTask = torrentTask;
+
+            if (torrentTask.Loaded)
+                InitTorrentTaskLoaded();
+            else
+                torrentTask.StatusUpdated += InitTorrentTaskLoaded;
         }
 
-        private State _state;
+        private async void InitTorrentTaskLoaded()
+        {
+            Debug.Assert(_currentTask != null);
+            Debug.Assert(_currentTask.Loaded);
+
+            _currentTask.StatusUpdated -= InitTorrentTaskLoaded;
+
+            Console.WriteLine("Listing torrent files:");
+            foreach (var file in _currentTask.RpcResponse!.Files!)
+            {
+                Console.Write($"{file.Index}. ");
+                Console.ForegroundColor = ConsoleColor.DarkCyan;
+                Console.Write(file.Path);
+                Console.ForegroundColor = ConsoleColor.DarkMagenta;
+                Console.WriteLine($" {file.Length:N0}B");
+                Console.ResetColor();
+            }
+
+            Console.Write("Select file index(empty to select all):");
+            string? selected = Console.ReadLine();
+            if (!string.IsNullOrWhiteSpace(selected))
+                await _currentTask.SetFilesAsync(selected).ConfigureAwait(false);
+
+            await _currentTask.UnpauseAsync().ConfigureAwait(false);
+            _currentTask.StatusUpdated += PrintBeforeComplete;
+        }
+
+        private void PrintBeforeComplete()
+        {
+            Debug.Assert(_currentTask!.RpcResponse != null);
+            PrintStatus(_currentTask.RpcResponse);
+
+            if (_currentTask.RpcResponse.Status == DownloadStatus.Complete)
+            {
+                _currentTask.StatusUpdated -= PrintBeforeComplete;
+                _lifetime.StopApplication();
+            }
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+        private static void PrintStatus(DownloadProgressStatus task)
+        {
+            Console.WriteLine("================");
+            Console.WriteLine($"Status: {task.Status}");
+            Console.WriteLine($"Download: {task.DownloadSpeed:N0} B/s Upload: {task.UploadSpeed:N0} B/s");
+            Console.WriteLine("Files:");
+            foreach (var file in task.Files!)
+            {
+                Console.Write($"{file.CompletedLength:N0}B/{file.Length:N0}B\t\t");
+                Console.ForegroundColor = ConsoleColor.DarkCyan;
+                Console.WriteLine(file.Path);
+                Console.ResetColor();
+            }
+        }
     }
 
     public class BTInteractiveOptions
