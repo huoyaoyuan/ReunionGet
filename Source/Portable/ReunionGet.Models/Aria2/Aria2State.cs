@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -12,15 +13,20 @@ namespace ReunionGet.Models.Aria2
 {
     public sealed class Aria2State : IDisposable
     {
+        private class Aria2TaskCollection : KeyedCollection<Aria2GID, Aria2Task>
+        {
+            protected override Aria2GID GetKeyForItem(Aria2Task item) => item.GID;
+        }
+
         private readonly Aria2Connection _connection;
         public Aria2State(Aria2Host host) => _connection = host.Connection;
 
-        private readonly Dictionary<Aria2GID, Aria2Task> _tasksDict
-            = new Dictionary<Aria2GID, Aria2Task>();
+        private readonly Aria2TaskCollection _tasksDict
+            = new Aria2TaskCollection();
 
-        public IReadOnlyCollection<Aria2GID> TrackedGIDs => _tasksDict.Keys;
-        public IReadOnlyCollection<Aria2Task> AllTasks => _tasksDict.Values;
-        public IEnumerable<Aria2Task> TopLevelTasks => _tasksDict.Values.Where(x => x.IsTopLevel);
+        public IEnumerable<Aria2GID> TrackedGIDs => _tasksDict.Select(x => x.GID);
+        public IReadOnlyCollection<Aria2Task> AllTasks => _tasksDict;
+        public IEnumerable<Aria2Task> TopLevelTasks => _tasksDict.Where(x => x.IsTopLevel);
 
         public ReaderWriterLockSlim TasksLock { get; } = new ReaderWriterLockSlim();
 
@@ -36,13 +42,13 @@ namespace ReunionGet.Models.Aria2
 
                 foreach (var followedGID in s.FollowedBy ?? Enumerable.Empty<Aria2GID>())
                 {
-                    if (!_tasksDict.ContainsKey(followedGID))
+                    if (!_tasksDict.Contains(followedGID))
                     {
                         var followedTask = new Aria2Task(_connection, followedGID, task);
 
                         using (TasksLock.UseWriteLock())
                         {
-                            _tasksDict.Add(followedGID, followedTask);
+                            _tasksDict.Add(followedTask);
                             AnyTrackedTaskAdded?.Invoke(followedTask);
                             task.AddFollowedTask(followedTask);
                         }
@@ -61,7 +67,7 @@ namespace ReunionGet.Models.Aria2
 
             using (TasksLock.UseWriteLock())
             {
-                _tasksDict.Add(gid, task);
+                _tasksDict.Add(task);
                 TopLevelTaskAdded?.Invoke(task);
                 AnyTrackedTaskAdded?.Invoke(task);
             }
@@ -80,7 +86,7 @@ namespace ReunionGet.Models.Aria2
 
             using (TasksLock.UseWriteLock())
             {
-                _tasksDict.Add(gid, task);
+                _tasksDict.Add(task);
                 TopLevelTaskAdded?.Invoke(task);
                 AnyTrackedTaskAdded?.Invoke(task);
             }
