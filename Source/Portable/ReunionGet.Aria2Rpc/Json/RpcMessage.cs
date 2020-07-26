@@ -76,7 +76,7 @@ namespace ReunionGet.Aria2Rpc.Json
         public int Code { get; }
 
         internal JsonRpcException(RpcError errorObj)
-            : base(errorObj.Message ?? $"A json RPC operation failed with error code {errorObj.Code}.")
+            : base($"JSON RPC error {errorObj.Code}: {errorObj.Message}" ?? $"A json RPC operation failed with error code {errorObj.Code}.")
             => Code = errorObj.Code;
     }
 }
