@@ -137,7 +137,7 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
             }).ConfigureAwait(false);
 
             Assert.Equal(-1, exception.Code);
-            Assert.Equal("error", exception.Message);
+            Assert.Equal("JSON RPC error -1: error", exception.Message);
         }
     }
 }
