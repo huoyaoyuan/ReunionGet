@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -14,12 +13,7 @@ namespace ReunionGet.Aria2Rpc.Json.Converters
             if (strValue is null)
                 return null;
 
-            // TODO: use Convert.From/ToHex
-            byte[] buffer = new byte[strValue.Length / 2];
-            for (int i = 0; i < buffer.Length; i++)
-                buffer[i] = byte.Parse(strValue.AsSpan(i * 2, 2), NumberStyles.HexNumber);
-
-            return new BitArray(buffer);
+            return new BitArray(Convert.FromHexString(strValue));
         }
 
         public override void Write(Utf8JsonWriter writer, BitArray value, JsonSerializerOptions options)

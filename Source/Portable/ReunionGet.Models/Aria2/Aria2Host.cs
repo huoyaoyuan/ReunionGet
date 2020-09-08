@@ -49,15 +49,7 @@ namespace ReunionGet.Models.Aria2
                     var random = new Random();
                     random.NextBytes(span);
 
-                    // TODO: Use Convert.ToHex
-                    const string HexString = "0123456789abcdef";
-                    Span<char> chars = stackalloc char[bytes * 2];
-                    for (int i = 0; i < span.Length; i++)
-                    {
-                        chars[i * 2] = HexString[span[i] >> 4];
-                        chars[i * 2 + 1] = HexString[span[i] & 0x0F];
-                    }
-                    return new string(chars);
+                    return Convert.ToHexString(span);
                 }
                 token = GenerateRandomString(8);
             }
