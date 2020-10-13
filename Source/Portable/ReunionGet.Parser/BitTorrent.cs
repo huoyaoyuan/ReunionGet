@@ -196,8 +196,16 @@ namespace ReunionGet.Parser
                         }
 
                         case "creation date":
-                            CreationTime = DateTimeOffset.FromUnixTimeSeconds(reader.ReadInt64());
+                        {
+                            if (reader.TryReadInt64(out long date))
+                                CreationTime = DateTimeOffset.FromUnixTimeSeconds(date);
+                            else if (reader.TryReadString(out string? str)
+                                && long.TryParse(str, out long strDate))
+                                CreationTime = DateTimeOffset.FromUnixTimeSeconds(strDate);
+                            else
+                                reader.SkipValue();
                             break;
+                        }
 
                         case "created by":
                             CreatedBy = reader.ReadString();
