@@ -187,8 +187,8 @@ namespace ReunionGet.Parser
                             while (!reader.TryReadListDictEnd())
                             {
                                 reader.ReadListStart();
-                                list.Add(new Uri(reader.ReadString()));
-                                reader.ReadListDictEnd();
+                                while (!reader.TryReadListDictEnd())
+                                    list.Add(new Uri(reader.ReadString()));
                             }
 
                             AnnounceList = list;
