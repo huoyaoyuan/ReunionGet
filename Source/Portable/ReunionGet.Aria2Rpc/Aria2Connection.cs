@@ -80,8 +80,8 @@ namespace ReunionGet.Aria2Rpc
 
             // HttpContentJsonExtensions.ReadFromJsonAsync rejects the media type 'application/json-rpc'
             using var responseStream = await httpResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
-            return await JsonSerializer.DeserializeAsync<TResponse>(responseStream, s_serializerOptions)
-                .ConfigureAwait(false);
+            return (await JsonSerializer.DeserializeAsync<TResponse>(responseStream, s_serializerOptions)
+                .ConfigureAwait(false))!;
         }
 
         public async Task<TResponse> DoRpcAsync<TResponse>(RpcParams<TResponse> @params)

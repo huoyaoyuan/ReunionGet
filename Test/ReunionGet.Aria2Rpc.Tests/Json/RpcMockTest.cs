@@ -56,7 +56,7 @@ namespace ReunionGet.Aria2Rpc.Tests.Json
 
             var requestObj = await request.Content.ReadFromJsonAsync<RequestObjectTemplate>(cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
-            Assert.Equal("2.0", requestObj.jsonrpc);
+            Assert.Equal("2.0", requestObj!.jsonrpc);
 
             foreach (var (method, req, rsp) in _possibleResults)
             {
